@@ -22,21 +22,22 @@ Input,output,qin,qout,espot,esout,polariz = [None]*7
 input_file,output_file,qin_file,qout_file,espot_file,esout_file,polariz_file = [None]*7
 
 ###### infoa ######
-iuniq,iuniq_p,nesp,nqpl,ihfree,irstrnt = 0,0,0,0,1,1
+iuniq,iuniq_p,nqpl,ihfree,irstrnt = 0,0,0,1,1
 
 ###### runlab ######
 title = None
 
 ###### espcom ######
-apot,awt,bpot,bwt = [None]*4
-ssvpot,rmse,rrmse,tot_nesp,max_nesp = 0.0,0.0,0.0,0,0
+a_pot,b_pot = [None]*2
+#ssvpot,rmse,rrmse,nesp,tot_nesp,max_nesp = 0.0,0.0,0.0,0,0
+ssvpot,tot_nesp = 0.0,0
 
 ###### calcul ###### 
 qcal,a,b,qwtval,pwtval,iqpcntr = [None]*6
 
 ###### polarization ######
-pol_dict,ipol,ipermdip,igdm = [None]*4
-AinvQ_list,AinvP_L2G_list,L2G_list,mat_out = [None]*4
+ipol,ipermdip,igdm = 5,1,1
+pol_dict,AinvQ_list,AinvP_L2G_list,L2G_list,mat_pot = [None]*5
 
 ###### lagrng ###### 
 grpchg = np.zeros((1))
@@ -78,17 +79,24 @@ def file_in():
 	return Input,output,qin,polariz,qout,espot,esout
 
 def read_in():
+	#############################################
+	# This function reads in control parameters.
+ 	#
+ 	# called from Main
+ 	#############################################
 	global ioutopt,nmol,iqopt,irstrnt,ihfree,qwt,pwt
 	global ipol,ipermdip,igdm,exc12,exc13,virtual
 
-	# start of molecule input
 	output_file.write('\n -----------------------------------------------')
-	output_file.write('\n      Py_RESP Alpha Version  ')
+	output_file.write('\n              Py_RESP Beta Version')
 	output_file.write('\n -----------------------------------------------')
 	output_file.write('\n '+input_file.readline())
-	output_file.write(' -----------------------------------------------\n\n')
+	output_file.write(' -----------------------------------------------\n')
+	output_file.write('\n ------------------')
+	output_file.write('\n Control Parameters')
+	output_file.write('\n ------------------')
 
-	# read in charge, number of charge centers, and control parameters
+	# Read in control parameters
 	if 'cntrl' in f90nml.read(Input):
 		cntrl_nml = f90nml.read(Input)['cntrl']
 		ioutopt = cntrl_nml['ioutopt'] if 'ioutopt' in cntrl_nml else 0
@@ -98,14 +106,14 @@ def read_in():
 		ihfree = cntrl_nml['ihfree'] if 'ihree' in cntrl_nml else 1
 		qwt = cntrl_nml['qwt'] if 'qwt' in cntrl_nml else 0.0005
 		pwt = cntrl_nml['pwt'] if 'pwt' in cntrl_nml else 0.0005
-		ipol = cntrl_nml['ipol'] if 'ipol' in cntrl_nml else 0
-		ipermdip = cntrl_nml['ipermdip'] if 'ipermdip' in cntrl_nml else 0
+		ipol = cntrl_nml['ipol'] if 'ipol' in cntrl_nml else 5
+		ipermdip = cntrl_nml['ipermdip'] if 'ipermdip' in cntrl_nml else 1
 		igdm = cntrl_nml['igdm'] if 'igdm' in cntrl_nml else 1
-		exc12 = cntrl_nml['exc12'] if 'exc12' in cntrl_nml else 1
-		exc13 = cntrl_nml['exc13'] if 'exc13' in cntrl_nml else 1
+		exc12 = cntrl_nml['exc12'] if 'exc12' in cntrl_nml else 0
+		exc13 = cntrl_nml['exc13'] if 'exc13' in cntrl_nml else 0
 		virtual = cntrl_nml['virtual'] if 'virtual' in cntrl_nml else 0
 	else:
-		output_file.write('Sorry, you must use namelist input\n')
+		output_file.write('\n Error: Must use namelist input\n')
 		sys.exit()
 
 	output_file.write('\n nmol        = %d   iqopt       = %d'%(nmol, iqopt))
@@ -123,34 +131,51 @@ def read_in():
 			break
 
 	if ipermdip > 0 and ipol <= 0:
-		output_file.write('Error: permanent dipole can be enabled only if ipol > 0\n')
+		output_file.write('\n Error: permanent dipole can be enabled only if ipol > 0\n')
 		sys.exit()
 
 def sing_mol():
+	##############################################################################################
+	# This function reads in single molecule input. nmol = 1 caused this function to be called.
+ 	#
+ 	# The molecule control decks contains
+ 	#  - ich, iuniq (and icntrs_p)
+ 	#  - izan, ivary (and ivary_p)
+ 	#  - (Largrange information for individual-molecule)
+ 	#
+ 	# called from Main
+ 	###############################################################################################
 	global nlgrng,iuniq,title,wtmol,ibeg,iend,izan,ivary
 	if ipermdip > 0:
 		global iuniq_p,ibeg_p,iend_p,izan_p,ivary_p
 
-	output_file.write("\n\n single-molecule run")
+	output_file.write('\n\n --------------------')
+	output_file.write('\n Molecule Information')
+	output_file.write('\n --------------------')
+	output_file.write("\n Single-molecule run")
 
 	title = []
 	wtmol = np.ndarray((1))
 
-	# read in fitting weight for q0 and esp point weighting
+	# Read in fitting weight for q0 and esp point weighting
 	wtmol[0] = float(input_file.readline())
-	output_file.write("\n\n Reading input for molecule 1 weight:%10.3f \n"%wtmol[0])
+	output_file.write("\n\n Molecule 1 weight:%10.3f \n"%wtmol[0])
 	title.append(input_file.readline())
-	output_file.write(title[0])
+	output_file.write(" Molecule 1 name: ",title[0])
 
-	# read in charge, number of charge centers (and number of permanent dipoles)
+	# Read in charge, number of charge centers
 	line = input_file.readline().split()
 	ich, iuniq = int(line[0]), int(line[1])
-	output_file.write('\n Total charge (ich):%3d'%ich)
+	output_file.write(' Total charge (ich):%3d'%ich)
 	output_file.write('\n Number of centers:%3d'%iuniq)
+
+	# Read in number of permanent dipoles
 	if ipermdip > 0:
 		iuniq_p = int(line[2])
 		output_file.write('\n Number of permanent dipoles:%3d'%iuniq_p)
 
+	# Initialize izan, ivary (, izan_p and ivary_p)
+	# Build ibeg, iend (, ibeg_p and iend_p)
 	ibeg = np.ndarray((1), dtype=int)
 	iend = np.ndarray((1), dtype=int)
 	izan = np.ndarray((iuniq), dtype=int)
@@ -168,16 +193,13 @@ def sing_mol():
 		iend_p[0] = iuniq_p-1
 		p_cnt = 0
 
-	print("ibeg",ibeg)
-	print("ibeg_p",ibeg_p)
-	print("iend",iend)
-	print("iend_p",iend_p)
-
-	# read in atomic number izan[i] and ivary[i]
+	# Build atomic number izan[i] and atom equivalencing info ivary[i] for charges
 	for i in range(iuniq):
 		line = input_file.readline().split()
 		izan[i], ivary[i] = int(line[0]), int(line[1])
 		output_file.write("\n%5d%5d%5d"%(i+1, izan[i], ivary[i]))
+
+		# Build atomic number izan_p[i] and equivalencing info ivary_p[i] for permanent dipoles
 		if ipermdip > 0:
 			dip_num.append(len(line)-2)
 			for j in range(len(line)-2):
@@ -186,38 +208,41 @@ def sing_mol():
 				output_file.write("%5d"%(ivary_p[p_cnt]))
 				p_cnt += 1
 
-	# read in lagrange constraints (including total and intra-molecular 
-	# charge constraints)
+	# Read in lagrange constraints (including total and intra-molecular charge constraints)
 	lagrange(ich, 0)
 
 	input_summary(dip_num)
 
 def mult_mol():
-	######################################################################
-	# this function reads in multiple molecule input. In function readin
- 	# it has already read the control variable input for the run, namely:
- 	# ich, iuniq, inopt, iqopt, ihfree, irstrnt, nlgrng, nmol
- 	# where nmol > 1 caused this function to be called.
- 	# The input form for the other molecules is that their entire control
- 	# decks are appended to the initial 2 control lines just read in,
- 	# each control deck separated by a blank line, and then comes the
+	##############################################################################################
+	# This function reads in multiple molecule input. nmol > 1 caused this function to be called.
+	#
+ 	# The input form for molecules is that their entire control decks are appended to the control 
+ 	# parameters just read in. Each control deck is separated by a blank line. Then comes the
  	# multiple-molecule specific input, which is
- 	#  - equivalencing of centers between molecules in the series
  	#  - the lagrange constraints to be applied between molecules
+ 	#  - equivalencing of centers between molecules in the series
  	#
- 	# the control characters read in the individual job decks are ignored
- 	# except for ich, and icntrs. The lagrange (charge) constraints
- 	# contained in the individual-molecule inputs ARE included.
+ 	# Each molecule control decks contains
+ 	#  - ich, icntrs (and icntrs_p)
+ 	#  - izan, ivary (and ivary_p)
+ 	#  - (Largrange information for individual-molecule)
  	#
- 	######################################################################
+ 	# called from Main
+ 	###############################################################################################
 	global nlgrng,iuniq,title,wtmol,ibeg,iend,izan,ivary
 	if ipermdip > 0:
 		global iuniq_p,ibeg_p,iend_p,izan_p,ivary_p
 
-	output_file.write("\n\n multiple-molecule run of %d molecules"%nmol)
+	output_file.write('\n\n --------------------')
+	output_file.write('\n Molecule Information')
+	output_file.write('\n --------------------')
+	output_file.write("\n Multiple-molecule run of %d molecules"%nmol)
 
 	title = []
 	wtmol = np.ndarray((nmol))
+
+	# Initialize izan, ivary, ibeg, iend (, izan_p, ivary_p, ibeg_p and iend_p)
 	ibeg = np.ndarray((nmol), dtype=int)
 	iend = np.ndarray((nmol), dtype=int)
 	izan = np.ndarray((1), dtype=int)
@@ -231,24 +256,25 @@ def mult_mol():
 		p_cnt = 0
 
 	for imol in range(nmol):
-		# read in fitting weight for q0 and esp point weighting
+		# Read in fitting weight for q0 and esp point weighting
 		wtmol[imol] = float(input_file.readline())
-		output_file.write("\n\n Reading input for molecule %d weight:%10.3f\n"%(imol+1,wtmol[imol]))
+		output_file.write("\n\n Molecule %d weight:%10.3f\n"%(imol+1,wtmol[imol]))
 		title.append(input_file.readline())
-		output_file.write(title[imol])
+		output_file.write(" Molecule %d Name: %s"%(imol+1,title[imol]))
 
-		# read in charge, number of charge centers (and number of permanent dipoles)
+		# Read in charge, number of charge centers
 		line = input_file.readline().split()
 		ich, icntrs = int(line[0]), int(line[1])
-		output_file.write('\n Total charge (ich):%3d'%ich)
+		output_file.write(' Total charge (ich):%3d'%ich)
 		output_file.write('\n Number of centers:%3d'%icntrs)
+
+		# Read in number of permanent dipoles
 		if ipermdip > 0:
 			icntrs_p = int(line[2])
 			output_file.write('\n Number of permanent dipoles:%3d'%icntrs_p)
 
-		# now some book-keeping: iuniq is the global variable for the total
-		# number of centers over all molecules. The first center of this
-		# mol therefore starts in iuniq and goes to iuniq+icntrs-1.
+		# Now some book-keeping: iuniq is the global variable for the total number of centers over all molecules.
+		# The first center of this mol therefore starts in iuniq and goes to iuniq+icntrs-1.
 		#
 		# Same for permanent dipoles.
 		ibeg[imol] = iuniq
@@ -257,15 +283,11 @@ def mult_mol():
 			ibeg_p[imol] = iuniq_p
 			iend_p[imol] = iuniq_p+icntrs_p-1
 
-		# trap for having too many centers
+		# Trap for having too many centers
 		if iend[imol]+1 > maxq:
 			output_file.write('\n ERROR: more than %5d centers'%maxq)
 			sys.exit()
 
-		# Read in atomic number izan[i] and ivary[i]
-		# Since ivary[i] is supposed to correspond to a center-number in the
-		# same molecule, this has to be adjusted to ivary[i]+ibeg[imol]
-		# convert angstroms to bohrs if necessary
 		izan.resize((iuniq+icntrs), refcheck=False)
 		ivary.resize((iuniq+icntrs), refcheck=False)
 		iuniq += icntrs
@@ -274,6 +296,9 @@ def mult_mol():
 			ivary_p.resize((iuniq_p+icntrs_p), refcheck=False)
 			iuniq_p += icntrs_p
 
+		# Read in atomic number izan[i] and ivary[i]
+		# Since ivary[i] is supposed to correspond to a center-number in the same molecule, this has to be adjusted 
+		# to ivary[i]+ibeg[imol]
 		for i in range(ibeg[imol], iend[imol]+1):
 			line = input_file.readline().split()
 			izan[i], ivary[i] = int(line[0]), int(line[1])
@@ -281,6 +306,7 @@ def mult_mol():
 			if ivary[i] > 0:
 				ivary[i] += ibeg[imol]
 
+			# Read in atomic number izan_p[i] and equivalencing info ivary_p[i] for permanent dipoles
 			if ipermdip > 0:
 				dip_num.append(len(line)-2)
 				for j in range(len(line)-2):
@@ -291,19 +317,17 @@ def mult_mol():
 						ivary_p[p_cnt] += ibeg_p[imol]
 					p_cnt += 1		
 
-		# now read in the lagrange constraints for this molecule (including total  
-		# and intra-molecular charge constraints)
+		# Now read in the lagrange constraints for this molecule (including total and intra-molecular charge constraints)
 		lagrange(ich, imol)
 
-	# end of molecule input, now do other preparation stuff
+	# End of molecule input, now do other preparation stuff
 
-	# read past a blank line after the final molecule job deck and then
-	# read in inter-molecule lagrange constraints.
-	# The "-99" for the total charge tells lagrange to drop the total charge
-	# constraint.
-	lagrange(-99)
+	# Read past a blank line after the final molecule control deck and then read in inter-molecule lagrange constraints.
+	# The "-99" for the total charge tells lagrange to drop the total charge constraint. The "-1" for the molecule number
+	# tells lagrange that this is inter-molecular charge constraints.
+	lagrange(-99, -1)
 
-	# inter-molecule equivalencing
+	# Perform inter-molecule equivalencing
 	print("before equiv, ivary",ivary)
 	print("before equiv, ivary_p",ivary_p)
 	mol_equiv()
@@ -312,20 +336,24 @@ def mult_mol():
 
 	input_summary(dip_num)
 
-def lagrange(ncharge, imol=-1):
-	###################################################
-	# read in and assign lagrange constraint pointers #
-	# called from "readin" and "mult_mol"             #
-	###################################################
+def lagrange(ncharge, imol):
+	#################################################################
+	# This function read in and assign lagrange constraint pointers.
+	#
+	# called from sing_mol() and mult_mol() 
+	#################################################################
 	global nlgrng
 
 	line = input_file.readline().split()
 	# If line is not empty, implement intra- or inter- molecular charge constraint(s)
 	if line:
-		output_file.write("\n ------------------------------------------------------------")
-		output_file.write("\n reading intra- or inter- molecular charge constraint(s) info")
-		output_file.write("\n ------------------------------------------------------------")
-		while line:
+		output_file.write("\n ---------------------------------------------------------")
+		if imol > -1:
+			output_file.write("\n Intra-Molecular Charge Constraint(s) Info for Molecule %d"%(imol+1))
+		else:
+			output_file.write("\n Inter-Molecular Charge Constraint(s) Info")
+		output_file.write("\n ---------------------------------------------------------")
+		while line:  # line is not empty
 			nlgrng += 1
 			grpchg.resize((nlgrng), refcheck=False)
 			lgrcnt.resize((nlgrng,maxq), refcheck=False)
@@ -352,7 +380,7 @@ def lagrange(ncharge, imol=-1):
 
 			line = input_file.readline().split()
 
-	# as long as ncharge is not -99, implement the "total charge" constraint
+	# As long as ncharge is not -99, implement the "total charge" constraint
 	if ncharge > -99:
 		nlgrng += 1
 		grpchg.resize((nlgrng), refcheck=False)
@@ -363,24 +391,21 @@ def lagrange(ncharge, imol=-1):
 			lgrcnt[nlgrng-1][j] = 1
 
 def mol_equiv():
-	# This function carries out the inter-molecule equivalencing by
+	###############################################################################################
+	# This function carries out the inter-molecule charge (and permanent dipole) equivalencing by
 	#
-	# First : read the cards saying how many centers will be read in in the
-	#         next card. a zero means we have finished input
+	# First : read the cards saying how many centers will be read in in the next card.
+	# Second: read the first-occurrence-in-each-molecule of the centers to be equivalenced.
 	#
-	# Second: read the first-occurrence-in-each-molecule of the centers to
-	#        be equivalenced.
+	#        - The specifcations MUST be in ascending order.
+	#        - The expanding of the centers within each molecule is based on the ivary values for 
+	#          the individual mol.
 	#
-	#        The specifcations MUST be in ascending order.
-	#
-	#        The expanding of the centers within each
-	#        molecule is based on the ivary values for the individual mol.
-	#
-	#        if ivary for mol 2+ is zero it is replaced with the atom number
-	#        of mol 1.
-	output_file.write("\n ------------------------------------")
-	output_file.write("\n reading equivalence info for charges")
-	output_file.write("\n ------------------------------------")
+	# called from mult_mol()
+	###############################################################################################
+	output_file.write("\n\n -------------------------------")
+	output_file.write("\n Charges Equivalence Information ")
+	output_file.write("\n -------------------------------")
 
 	line = input_file.readline().split()
 	while line:  # line is not empty
@@ -405,10 +430,11 @@ def mol_equiv():
 			iatm[i] += ibeg[imoll[i]-1]   # -1 since python is 0 indexed
 
 		for i in range(1, ngrp):
-			ivary[iatm[i]-1] = iatm[0]
+			ivary[iatm[i]-1] = iatm[0]   # -1 since python is 0 indexed
 
 		line = input_file.readline().split()
 
+	# If ivary for mol 2+ is greater than zero it is replaced with the atom number of mol 1.
 	for i in range(iuniq):
 		if ivary[i] > 0:
 			vary = ivary[ivary[i]-1]
@@ -416,9 +442,9 @@ def mol_equiv():
 				ivary[i] = vary
 
 	if ipermdip > 0:
-		output_file.write("\n ----------------------------------------------")
-		output_file.write("\n reading equivalence info for permanent dipoles")
-		output_file.write("\n ----------------------------------------------")
+		output_file.write("\n\n -----------------------------------------")
+		output_file.write("\n Permanent Dipoles Equivalence Information")
+		output_file.write("\n -----------------------------------------")
 
 		line = input_file.readline().split()
 		while line:  # line is not empty
@@ -443,10 +469,11 @@ def mol_equiv():
 				idip[i] += ibeg_p[imoll[i]-1]   # -1 since python is 0 indexed
 	
 			for i in range(1, ngrp):
-				ivary_p[idip[i]-1] = idip[0]
+				ivary_p[idip[i]-1] = idip[0]   # -1 since python is 0 indexed
 	
 			line = input_file.readline().split()
 
+		# If ivary_p for mol 2+ is greater than zero it is replaced with the atom number of mol 1.
 		for i in range(iuniq_p):
 			if ivary_p[i] > 0:
 				vary = ivary_p[ivary_p[i]-1]
@@ -454,13 +481,18 @@ def mol_equiv():
 					ivary_p[i] = vary
 
 def input_summary(dip_num):
-	output_file.write("\n\n  --------------------")
+	#####################################################################################
+	# This function outputs summary info for ivary, iuniq, iuniq_p, qwt, pwt and nlgrng.
+	#
+	# called from sing_mol() and mult_mol()
+	#####################################################################################
+	output_file.write("\n\n -----------------------------")
 	if ipermdip > 0:
-		output_file.write("\n   Atom/Dipole Ivary")
+		output_file.write("\n Atom/Dipole Ivary Information")
 		pcnt = 0
 	else:
-		output_file.write("\n     Atom   Ivary")
-	output_file.write("\n  --------------------")
+		output_file.write("\n Atom Ivary Information")
+	output_file.write("\n -----------------------------")
 	icnt = 0
 	jcnt = 0
 	for iat in range(iuniq):
@@ -474,18 +506,28 @@ def input_summary(dip_num):
 			output_file.write("\n")
 			icnt += 1
 	
-	output_file.write("\n\n Total number of atoms      =%5d"%iuniq)
+	output_file.write("\n -------------------------")
+	output_file.write("\n Input Information Summary")
+	output_file.write("\n -------------------------")
+	output_file.write("\n Total number of atoms      =%5d"%iuniq)
 	if ipermdip > 0:
 		output_file.write("\n Total number of permanent dipoles      =%5d"%iuniq_p)
-	output_file.write("\n Weight factor on initial charge restraints=%10.6f\n"%qwt)
+	output_file.write("\n Weight factor on initial charge restraints=%10.6f"%qwt)
 	if ipermdip > 0:
-		output_file.write("\n Weight factor on initial dipole restraints=%10.6f\n"%pwt)
-	output_file.write("\n\n There are%3d charge constraints"%nlgrng)
+		output_file.write("\n Weight factor on initial dipole restraints=%10.6f"%pwt)
+	output_file.write("\n There are%3d charge constraints"%nlgrng)
 
 def read_pol_dict():
+	####################################################################################
+	# This function builds polarizability dictionary pol_dict for each atom type by
+	# reading the polarizability file.
+	#
+	# called from Main
+	####################################################################################
 	global pol_dict
 
-	output_file.write("\n\n\n Read polarizability and radii information from %s"%polariz)
+	output_file.write("\n\n Read polarizability and radii information from:")
+	output_file.write("\n %s"%polariz)
 	output_file.write("\n Assume the units are in a.u.")
 
 	pol_dict = {}
@@ -505,6 +547,15 @@ def read_pol_dict():
 	print("pol_dict",pol_dict)
 
 def neighbors(imol):
+	####################################################################################
+	# This function builds the following for molecule imol:
+	#  - n12: see build12()
+	#  - dict12: see build12()
+	#  - n13: see build13()
+	#  - dict13: see build13()
+	#
+	# called from matpot()
+	####################################################################################
 	natm = iend[imol]-ibeg[imol]+1
 
 	n12, dict12, ibond, nbonds = build12(imol, natm)
@@ -513,6 +564,15 @@ def neighbors(imol):
 	return n12, dict12, n13, dict13
 
 def build12(imol, natm):
+	####################################################################################
+	# This function builds the following for molecule imol:
+	#  - n12: list for # of 12-connecting atoms of each atom
+	#  - dict12: dictionary for 12-connecting atoms of each atom
+	#  - ibond: see build_bonds()
+	#  - nbond: see build_bonds()
+	#
+	# called from neighbors()
+	####################################################################################
 	nbonds, ibond = build_bonds(imol, natm)
 
 	n12 = np.zeros(natm, dtype=int)
@@ -534,6 +594,14 @@ def build12(imol, natm):
 	return n12, dict12, ibond, nbonds
 
 def build_bonds(imol, natm):
+	####################################################################################
+	# This function builds the following for molecule imol by scanning distance between
+	# atom pairs:
+	#  - nbond: total # of 12-connecting pairs
+	#  - ibond: list of all 12-connecting pairs
+	#
+	# called from build12()
+	####################################################################################
 	ibond = np.ndarray((2, 4*natm), dtype=int)
 	cutoff = [0.8,1.95,1.6,1.85,1.58,1.50,1.2]    # in angstrom
 	cutoff2 = [(i/au2A)**2 for i in cutoff]
@@ -573,6 +641,13 @@ def build_bonds(imol, natm):
 	return nbonds, ibond
 
 def build13(ibond, nbonds, natm):
+	####################################################################################
+	# This function builds the following:
+	#  - n13: list for # of 13-connecting atoms of each atom
+	#  - dict13: dictionary for 13-connecting atoms of each atom
+	#
+	# called from neighbors()
+	####################################################################################
 	nangls, iangle = build_angle(ibond, nbonds)
 
 	n13 = np.zeros(natm, dtype=int)
@@ -594,6 +669,13 @@ def build13(ibond, nbonds, natm):
 	return n13, dict13
 
 def build_angle(ibond, nbonds):
+	####################################################################################
+	# This function builds the following by scanning ibond:
+	#  - nangls: total # of 13-connecting pairs
+	#  - iangle: list of all 13-connecting pairs
+	#
+	# called from build13()
+	####################################################################################
 	iangle = np.ndarray((3, 2*nbonds), dtype=int)
 
 	nangls = 0
@@ -622,24 +704,31 @@ def build_angle(ibond, nbonds):
 	return nangls, iangle
 
 def matpot():
-	# read in the electrostatic potential points used in the fitting,
-	# building up as we go the matrices for LU decomposition
+	#####################################################################################################
+	# This function read in the electrostatic potential points used in the fitting, building up the 
+	# matrices for LU decomposition:
+	#  - a_pot: Weighted symmetric atom-esp distance matrix
+	#  - b_pot: Weighted potential vector
+	#
+	# Other matrices include:
+	#  - crd: Atom coordinate matrix
+	#  - mat_pot: Original atom-esp distance matrix
 	#
 	# called from Main
-	global apot, awt, bpot, bwt, crd, ssvpot, nesp, mat_out, tot_nesp, max_nesp
+	#####################################################################################################
+	global a_pot, b_pot, crd, mat_pot, ssvpot, tot_nesp
 	if ipol > 0:
 		global n12_list, dict12_list, n13_list, dict13_list, AinvQ_list
 		if ipermdip > 0:
 			global AinvP_L2G_list, L2G_list
-	
-	apot = np.zeros((iuniq+iuniq_p,iuniq+iuniq_p))
-	awt = np.zeros((iuniq+iuniq_p,iuniq+iuniq_p))
-	bpot = np.zeros((iuniq+iuniq_p))
-	bwt = np.zeros((iuniq+iuniq_p))
-	crd = np.zeros((3,iuniq))
-	mat_out = np.ndarray((0, iuniq+iuniq_p))
 
-	espot_file = open(espot, 'r')
+	###########################################
+	# Section 1. Initiaize required variables #
+	###########################################
+	a_pot = np.zeros((iuniq+iuniq_p,iuniq+iuniq_p))
+	b_pot = np.zeros((iuniq+iuniq_p))
+	crd = np.zeros((3,iuniq))
+	mat_pot = np.ndarray((0, iuniq+iuniq_p))
 
 	if ipol > 0:
 		n12_list, dict12_list = [], []
@@ -648,35 +737,55 @@ def matpot():
 		if ipermdip > 0:
 			AinvP_L2G_list, L2G_list = [], []
 
-	ioff = 0     # local variable
+	#######################################################################
+	# Section 2. Scan the espot file and build a_pot, b_pot, crd, mat_pot #
+	#######################################################################
+	output_file.write("\n\n --------------------------------------")
+	output_file.write("\n Atomic and ESP Coordinates Information")
+	output_file.write("\n --------------------------------------")
+	espot_file = open(espot, 'r')
+	ioff = 0      # local variable
+	max_nesp = 0  # local variable
 	for imol in range(nmol):
+		###################################################
+		# Section 2.1. Read the metainfo of molecule imol #
+		###################################################
 		if ipol > 0:
-			atype = []        # local variable
+			atype = []    # local variable
 		line = espot_file.readline().split()
 		natm, nesp = int(line[0]), int(line[1])
+
 		tot_nesp += nesp
 		max_nesp = max(max_nesp, nesp)
-		output_file.write("\n\n\n Reading esp's for molecule %3d"%(imol+1))
+		mat_pot.resize((max_nesp, iuniq+iuniq_p), refcheck=False)
+
+		output_file.write("\n Reading esp's for molecule %3d"%(imol+1))
 		output_file.write("\n total number of atoms      = %5d"%natm)
 		output_file.write("\n total number of esp points = %5d"%nesp)
-
 		output_file.write("\n\n center       X               Y               Z")
+
+		#################################
+		# Section 2.2. Build matrix crd #
+		#################################
 		for i in range(natm):
+			# Read the atomic coordinate (and atom type) info of molecule imol
 			line = espot_file.readline().split()
 			crd[0][ioff], crd[1][ioff], crd[2][ioff] = float(line[0]),float(line[1]),float(line[2])
 			if ipol > 0:
 				atype.append(line[3].lower())
 			output_file.write("\n {:4d}{:16.7E}{:16.7E}{:16.7E}".format(i+1, crd[0][ioff], crd[1][ioff], crd[2][ioff]))
 			ioff += 1
+		output_file.write("\n\n")
 
-		wt = wtmol[imol]
-		wt2 = wt*wt
-
+		###########################################################################################
+		# Section 2.3. Initialize dismatq, matq, (dismatdip and matp. Build AinvQ, AinvP and L2G) #
+		###########################################################################################
 		dismatq = np.zeros((natm))
 		matq = np.zeros((natm))
 		if ipol > 0:
 			dismatdip = np.zeros((1, 3*natm))
 
+			# Build n12, dict12, n13, dict13 for imol, and append into corresponding lists
 			n12, dict12, n13, dict13 = neighbors(imol)
 			n12_list.append(n12)
 			dict12_list.append(dict12)
@@ -689,6 +798,8 @@ def matpot():
 			print("n13_list, dict13_list")
 			print(n13_list, dict13_list)
 
+			# Considering permanent dipole, we need to build AinvQ, AinvP, L2G; without permanent dipole
+			# we only need to build AinvQ. See bld_AinvQP() for the meaning of each matrix.
 			if ipermdip > 0:
 				npermdip = iend_p[imol]-ibeg_p[imol]+1
 				matp = np.zeros((npermdip))
@@ -710,17 +821,22 @@ def matpot():
 			print()
 			print("AinvP",AinvP)
 
-		mat_out.resize((max_nesp, iuniq+iuniq_p), refcheck=False)
-
-		xij = np.ndarray((3))
+		#############################################
+		# Section 2.4. build a_pot, b_pot and mat_pot #
+		#############################################
+		wt = wtmol[imol]
+		wt2 = wt*wt
+		xij = np.ndarray((3)) # local variable for the distance elements between esp point i and atom j
 		for i in range(nesp):
+			# Read the esp point coordinate info of molecule imol
 			line = espot_file.readline().split()
 			if not line:
-				output_file.write("     premature end of potential file")
+				output_file.write("\n Error: premature end of potential file")
 				sys.end()
 			espi, xi, yi, zi = float(line[0]),float(line[1]),float(line[2]),float(line[3])
 			ssvpot += wt2*espi*espi
 
+			# Calculate the distance between esp point i and atom j
 			for j in range(ibeg[imol], iend[imol]+1):
 				xij[0] = xi-crd[0][j]
 				xij[1] = yi-crd[1][j]
@@ -731,22 +847,27 @@ def matpot():
 
 				j_idx = j-ibeg[imol]
 
-				if ipol == 5 and igdm > 0:
-					polj, radj = pol_dict[atype[j_idx]][0], pol_dict[atype[j_idx]][1]
-					fe, ft, f0 = damp_facts(rij, 1, polj, 0, radj)
-					print("i, j, fe, ft, f0",i, j, fe, ft, f0)
-					rij /= f0
-					rij3 /= fe
+				# Calculate damping factors fe and f0 for the pGM model
+				if igdm > 0:
+					if ipol == 5:
+						polj, radj = pol_dict[atype[j_idx]][0], pol_dict[atype[j_idx]][1]
+						fe, ft, f0 = damp_facts(rij, 1, polj, 0, radj)
+						print("i, j, fe, ft, f0",i, j, fe, ft, f0)
+						rij /= f0
+						rij3 /= fe
+					else:
+						output_file.write("\n Error: igdm=1 only works for the pGM model (ipol=5) !!!")
+						sys.end()
 
+				# Build dismatq (and dismatdip)
 				dismatq[j_idx] = 1/rij
 				if ipol > 0:
 					for k in range(3):
 						dismatdip[0][3*j_idx+k] = xij[k]/rij3
 
+			# Diagonal elements of a_pot (charge)
 			if ipol > 0:
 				dismatdip_AinvQ = np.matmul(dismatdip, AinvQ)
-
-			# Diagonal elements of apot (charge)
 			for j in range(ibeg[imol], iend[imol]+1):
 				j_idx = j-ibeg[imol]
 
@@ -755,32 +876,31 @@ def matpot():
 				else:
 					matq[j_idx] = dismatq[j_idx]
 
-				mat_out[i][j] = matq[j_idx]
-				bpot[j] += espi*matq[j_idx]
-				apot[j][j] += matq[j_idx]**2
+				mat_pot[i][j] = matq[j_idx]
+				b_pot[j] += espi*matq[j_idx]
+				a_pot[j][j] += matq[j_idx]**2
 
-			# Off-diagonal elements of apot (charge)
+			# Off-diagonal elements of a_pot (charge)
 			for j in range(ibeg[imol], iend[imol]):
 				j_idx = j-ibeg[imol]
 				for k in range(j+1, iend[imol]+1):
 					k_idx = k-ibeg[imol]
 
-					apot[j][k] += matq[j_idx]*matq[k_idx]
+					a_pot[j][k] += matq[j_idx]*matq[k_idx]
 
 			if ipermdip > 0:
+				# Diagonal elements of a_pot (dipole)
 				dismatdip_AinvP_L2G = np.matmul(np.matmul(dismatdip, AinvP_I),L2G)
-
-				# Diagonal elements of apot (dipole)
 				for j in range(ibeg_p[imol], iend_p[imol]+1):
 					j_idx1 = j-ibeg_p[imol]
 					j_idx2 = j+iuniq
 					matp[j_idx1] = dismatdip_AinvP_L2G[0][j_idx1]
 
-					mat_out[i][j_idx2] = matp[j_idx1]
-					bpot[j_idx2] += espi*matp[j_idx1]
-					apot[j_idx2][j_idx2] += matp[j_idx1]**2
+					mat_pot[i][j_idx2] = matp[j_idx1]
+					b_pot[j_idx2] += espi*matp[j_idx1]
+					a_pot[j_idx2][j_idx2] += matp[j_idx1]**2
 
-				# Off-diagonal elements of apot (dipole)
+				# Off-diagonal elements of a_pot (dipole)
 				for j in range(ibeg_p[imol], iend_p[imol]):
 					j_idx1 = j-ibeg_p[imol]
 					j_idx2 = j+iuniq
@@ -788,69 +908,88 @@ def matpot():
 						k_idx1 = k-ibeg_p[imol]
 						k_idx2 = k+iuniq
 	
-						apot[j_idx2][k_idx2] += matp[j_idx1]*matp[k_idx1]
+						a_pot[j_idx2][k_idx2] += matp[j_idx1]*matp[k_idx1]
 
-				# Off-diagonal elements of apot (charge * dipole)
+				# Off-diagonal elements of a_pot (charge * dipole)
 				for j in range(ibeg[imol], iend[imol]+1):
 					j_idx = j-ibeg[imol]
 					for k in range(ibeg_p[imol], iend_p[imol]+1):
 						k_idx1 = k-ibeg_p[imol]
 						k_idx2 = k+iuniq
 
-						apot[j][k_idx2] += matq[j_idx]*matp[k_idx1]
+						a_pot[j][k_idx2] += matq[j_idx]*matp[k_idx1]
 
+		# Apply weights on a_pot and b_pot
 		for j in range(ibeg[imol], iend[imol]+1):
-			bwt[j] = wt2*bpot[j]
-			awt[j][j] = wt2*apot[j][j]
+			# Diagonal elements of a_pot (charge)
+			b_pot[j] *= wt2
+			a_pot[j][j] *= wt2
 			for k in range(j+1, iend[imol]+1):
-				awt[j][k] = wt2*apot[j][k]
+				# Off-diagonal elements of a_pot (charge)
+				a_pot[j][k] *= wt2
 
 		if ipermdip > 0:
 			for j in range(ibeg_p[imol], iend_p[imol]+1):
+				# Diagonal elements of a_pot (dipole)
 				j_idx = j+iuniq
-				bwt[j_idx] = wt2*bpot[j_idx]
-				awt[j_idx][j_idx] = wt2*apot[j_idx][j_idx]
+				b_pot[j_idx] *= wt2
+				a_pot[j_idx][j_idx] *= wt2
 				for k in range(j+1, iend_p[imol]+1):
+					# Off-diagonal elements of a_pot (dipole)
 					k_idx = k+iuniq
-					awt[j_idx][k_idx] = wt2*apot[j_idx][k_idx]
+					a_pot[j_idx][k_idx] *= wt2
 
 			for j in range(ibeg[imol], iend[imol]+1):
 				for k in range(ibeg_p[imol], iend_p[imol]+1):
+					# Off-diagonal elements of a_pot (charge * dipole)
 					k_idx = k+iuniq
-					awt[j][k_idx] = wt2*apot[j][k_idx]
+					a_pot[j][k_idx] *= wt2
 
-	# symmetrize the potenitial and weighted potential matrices
+	# Symmetrize the a_pot
 	for j in range(iuniq+iuniq_p-1):
 		for k in range(j+1, iuniq+iuniq_p):
-			awt[k][j] = awt[j][k]
-			apot[k][j] = apot[j][k]
+			a_pot[k][j] = a_pot[j][k]
 	print()
-	print("mat_out")
-	print(mat_out)
+	print("mat_pot")
+	print(mat_pot)
 	print()
-	print("awt")
-	print(awt)
-	print("bwt")
-	print(bwt)
+	print("a_pot")
+	print(a_pot)
+	print("b_pot")
+	print(b_pot)
 
 	espot_file.close()
 
 def bld_AinvQP(imol, atype):
-	##################################################################################
-	# A: Applequist matrix (Relay matrix)
-	# Ainv: Inverse of Applequist matrix. This is the molecular polarizability matrix.
-	# QFld: Charge field matrix
-	# PFld: Dipole field matrix
-	# AinvQ: Ainv * QFld
-	# AinvP: Ainv * PFld
-	# L2G: Matrix that converts permanent dipoles from local frames to global frames.
-	##################################################################################
+	######################################################################################
+	# This function builds the following for molecule imol:
+	#  - A: Applequist matrix (Relay matrix)
+	#  - Ainv: Inverse of Applequist matrix. This is the molecular polarizability matrix.
+	#  - QFld: Charge field matrix
+	#  - PFld: Dipole field matrix
+	#  - AinvQ: Ainv * QFld
+	#  - AinvP: Ainv * PFld
+	#  - L2G: Matrix that converts permanent dipoles from local frames to global frames.
+	#
+	# called from matpot()
+	######################################################################################
 
-	# Initialize A, QFld (and PFld)
+	##########################################################
+	# Section 1. Initiaize matrices A, QFld (, PFld and L2G) #
+	##########################################################
 	natm = iend[imol]-ibeg[imol]+1
 	A = np.zeros((3*natm, 3*natm))
 	QFld = np.zeros((3*natm, natm))
-	xij = np.ndarray((3)) # local variable, stores the distance elements between atoms i and j
+	xij = np.ndarray((3)) # local variable for the distance elements between atoms i and j
+
+	if ipermdip > 0:
+		npermdip = iend_p[imol]-ibeg_p[imol]+1
+		PFld = np.zeros((3*natm, 3*natm))
+		L2G = np.zeros((3*natm, npermdip))
+
+	################################################
+	# Section 2. Build matrices A, QFld (and PFld) #
+	################################################
 
 	# Fill the diagonal matrices of A
 	for i in range(natm):
@@ -859,16 +998,12 @@ def bld_AinvQP(imol, atype):
 			poli = pol_dict[atype[i]][0]
 			A[idx][idx] = 1/poli
 
-	if ipermdip > 0:
-		npermdip = iend_p[imol]-ibeg_p[imol]+1
-		PFld = np.zeros((3*natm, 3*natm))
-		L2G = np.zeros((3*natm, npermdip))
-
 	for i in range(natm-1):
 		i_idx = ibeg[imol]+i
 		for j in range(i+1, natm):
 			j_idx = ibeg[imol]+j
 
+			# Calculate the distance between atoms i and j
 			for k in range(3):
 				xij[k] = crd[k][i_idx]-crd[k][j_idx]   # !!! from j to i
 
@@ -877,6 +1012,7 @@ def bld_AinvQP(imol, atype):
 			rij3 = rij*rij2
 			rij5 = rij2*rij3
 
+			# Calculate damping factors fe and ft for selected Applequist, Thole or pGM models
 			poli, polj = pol_dict[atype[i]][0], pol_dict[atype[j]][0]
 			radi, radj = pol_dict[atype[i]][1], pol_dict[atype[j]][1]
 			fe, ft, f0 = damp_facts(rij, poli, polj, radi, radj)
@@ -925,10 +1061,14 @@ def bld_AinvQP(imol, atype):
 	print("A")
 	print(A)
 	print()
+
+	###############################
+	# Section 3. Build matrix L2G #
+	###############################
 	if ipermdip > 0:
-		# Fill L2G
 		p_cnt = 0
 		for i in range(natm):
+			# Fill the 12-connecting elements of L2G
 			if i in dict12_list[imol]:
 				i_idx = ibeg[imol]+i
 				for j in dict12_list[imol][i]:
@@ -943,6 +1083,7 @@ def bld_AinvQP(imol, atype):
 						L2G[3*i+k][p_cnt] = xij[k]/rij
 					p_cnt += 1
 			if virtual > 0:
+				# If virtual bond is enabled, fill the 13-connecting elements of L2G
 				if i in dict13_list[imol]:
 					i_idx = ibeg[imol]+i
 					for j in dict13_list[imol][i]:
@@ -966,6 +1107,9 @@ def bld_AinvQP(imol, atype):
 	print("QFld before")
 	print(QFld)
 
+	############################################################
+	# Section 4. Modify QFld and PFld based on exc12 and exc13 #
+	############################################################
 	if exc12 == 1:
 		for i in range(natm):
 			if i in dict12_list[imol]:
@@ -1004,6 +1148,9 @@ def bld_AinvQP(imol, atype):
 	print("QFld after13",QFld)
 	print("PFld after13",PFld)
 
+	#####################################################
+	# Section 5. Finalize by building AinvQ (and AinvP) #
+	#####################################################
 	Ainv = np.linalg.inv(A)
 	print()
 	print("Ainv",Ainv)
@@ -1016,18 +1163,23 @@ def bld_AinvQP(imol, atype):
 		return AinvQ
 
 def damp_facts(r, poli, polj, radi, radj):
-	fe, ft, f0 = 1, 1, 1  # Applequist
+	######################################################################################
+	# This function calculates damping factors fe, ft (and f0, pGM model only) for Thole
+	# and pGM models.
+	#
+	# called from bld_AinvQP() and matpot()
+	######################################################################################
+	fe, ft, f0 = 1, 1, 1  # Applequist model
 
-	if ipol == 2:  # Tinker-exponential
+	if ipol == 2:  # Tinker-exponential model
 		coef1 = math.sqrt(radi/poli)
 		coef2 = math.sqrt(radj/polj)
 		v = r**3 * coef1 * coef2
 		exp_v = math.exp(-v)
 		fe = 1 - exp_v
 		ft = fe - v * exp_v
-		#f0 = exp_v
 
-	elif ipol == 3:  # Exponential-Thole
+	elif ipol == 3:  # Exponential-Thole model
 		coef1 = math.sqrt(radi) / poli**(1/6)
 		coef2 = math.sqrt(radj) / polj**(1/6)
 		v = r * coef1 * coef2
@@ -1036,9 +1188,8 @@ def damp_facts(r, poli, polj, radi, radj):
 		v3 = v * v2
 		fe = 1 - (v2/2 + v + 1) * exp_v
 		ft = fe - (v3/6) * exp_v
-		#f0 = exp_v
 
-	elif ipol == 4:  # linear Thole
+	elif ipol == 4:  # linear Thole model
 		coef1 = math.sqrt(radi) * poli**(1/6)
 		coef2 = math.sqrt(radj) * polj**(1/6)
 		v = r / (coef1 * coef2)
@@ -1047,11 +1198,8 @@ def damp_facts(r, poli, polj, radi, radj):
 			v4 = v3*v
 			fe = 4*v3 - 3*v4
 			ft = v4
-		#	f0 = v
-		#else:
-		#	f0 = 0
 
-	elif ipol == 5:  # pGM
+	elif ipol == 5:  # pGM model
 		beta = 1/math.sqrt((radi**2 + radj**2)*2)  # This doesn't match pGM19 paper eq(11)
 		s1 = beta * r
 		if s1 < 20:  # why < 20?
@@ -1066,6 +1214,11 @@ def damp_facts(r, poli, polj, radi, radj):
 	return fe, ft, f0
 
 def init_q0_p0():
+	##################################################################
+	# This function initializes charges q0 and permanent dipoles p0.
+	#
+	# called from Main
+	##################################################################
 	global q0
 	
 	q0 = np.ndarray((iuniq))
@@ -1073,21 +1226,24 @@ def init_q0_p0():
 		global p0
 		p0 = np.ndarray((iuniq_p))
 
+	output_file.write("\n ------------------------")
+	output_file.write("\n Optimization Information")
+	output_file.write("\n ------------------------")
 	if iqopt > 1:
-		# replace initial charges q0 from qin if iqopt>1
+		# Replace initial charges q0 and permanent dipoles p0 from qin if iqopt>1
 		qin_file = open(qin, 'r')
 		if ipermdip > 0:
-			output_file.write("\n since iqopt>1, %4d new q0 values and %4d "%(iuniq, iuniq_p))
-			output_file.write("\n new p0 values will be read from file %s"%qin)
+			output_file.write("\n Since iqopt>1, %4d new q0 values and %4d "%(iuniq, iuniq_p))
+			output_file.write("\n new p0 values will be read from file %s\n"%qin)
 		else:
-			output_file.write("\n since iqopt>1, %4d new q0 values will "%iuniq)
-			output_file.write("\n be read from file %s"%qin)
+			output_file.write("\n Since iqopt>1, %4d new q0 values will "%iuniq)
+			output_file.write("\n be read from file %s\n"%qin)
 
 		q0_idx = 0
 		if ipermdip > 0:
 			p0_idx = 0
 
-		# now read in replacement charges
+		# Read in replacement charges
 		for imol in range(nmol):
 			natm = iend[imol]-ibeg[imol]+1
 
@@ -1100,6 +1256,7 @@ def init_q0_p0():
 				q0_idx += 1
 				line = qin_file.readline().split()
 
+			# Read in replacement permanent dipoles
 			if ipermdip > 0:
 				for i in range(3):
 					line = qin_file.readline().split()
@@ -1122,51 +1279,51 @@ def init_q0_p0():
 		print("q0: ",q0)
 		print("p0: ",p0)
 	else:
-		# setting initial charges/dipoles to 0; done if iqopt=1
+		# Set initial charges (and permanent dipoles) to 0
 		q0.fill(0.0)
 		if ipermdip > 0:
-			output_file.write("\n\n iqopt=1, all q0 and p0 values will be set to 0")
+			output_file.write("\n iqopt=1, all q0 and p0 values will be set to 0\n")
 			p0.fill(0.0)
 		else:
-			output_file.write("\n\n iqopt=1, all q0 values will be set to 0")
+			output_file.write("\n iqopt=1, all q0 values will be set to 0\n")
 
 def data_prep():
-	# setup pointers for groups of charges based on "ivary" info
+	##############################################################################################
+	# This function setups pointers for groups of charges based on "ivary" info.
 	#
-	# called from Main
-
 	#************************************************************************
 	# begin section: set lists for combined and frozen charges
 	#
 	# ivary[i] = 0, it is a new charge center to be fitted
-	# ivary[i] =+n, it is a charge center to be fitted with center n
-	#                    (center n must be a previous center entered with
-	#                    ivary[n] = 0
+	# ivary[i] =+n, it is a charge center to be fitted with center n (center n must be a previous 
+	#                    center entered with ivary[n] = 0
 	# ivary[i] =-n, it is a frozen charge center to be kept at q0[i]
 	#
 	# Similarly:
 	#
-	# ivary_p[i] = 0, it is a new permanent dipole center to be fitted
+	# ivary_p[i] = 0, it is a new permanent dipole center to be fitted center n (center n must be a
 	# ivary_p[i] =+n, it is a permanent dipole center to be fitted with 
-	#                    center n (center n must be a previous center 
-	#                    entered with ivary_p[n] = 0
-	# ivary_p[i] =-n, it is a frozen permanent dipole center to be kept
-	#                    at p0[i]
+	#                    previous center entered with ivary_p[n] = 0
+	# ivary_p[i] =-n, it is a frozen permanent dipole center to be kept at p0[i]
 	#************************************************************************
+	#
+	# called from Main
+	###############################################################################################
 	global iqpcntr, nqpl
 
 	nqp = 0
 	iqpcntr = np.zeros((iuniq+iuniq_p+nlgrng), dtype=int)
+
+	# Fill in charge equivalence information in iqpcntr
 	for i in range(iuniq):
 		if ivary[i] == 0:
-			#nat += 1
 			nqp += 1
 			iqpcntr[i] = nqp
 		elif ivary[i] > 0:
 			iqpcntr[i] = iqpcntr[ivary[i]-1]
 
 			if iqpcntr[i] > nqp:
-				output_file.write("\n data_prep: charge equivalence input is screwy")
+				output_file.write("\n Error: data_prep() charge equivalence input is screwy")
 				sys.end()
 		else:
 			iqpcntr[i] = -1
@@ -1174,9 +1331,10 @@ def data_prep():
 	if nqp == 0:
 		output_file.write("\n Warning: ALL charges are frozen!!!")
 	else:
-		output_file.write("\n\n\n Number of unique UNfrozen charge centers=%5d"%nqp)
+		output_file.write("\n Number of unique UNfrozen charge centers = %5d"%nqp)
 		nq = nqp
 
+	# Fill in permanent dipole equivalence information in iqpcntr
 	if ipermdip > 0:
 		for i in range(iuniq_p):
 			if ivary_p[i] == 0:
@@ -1186,7 +1344,7 @@ def data_prep():
 				iqpcntr[iuniq+i] = iqpcntr[iuniq+ivary_p[i]-1]
 
 				if iqpcntr[iuniq+i] > nqp:
-					output_file.write("\n data_prep: permanent dipole equivalence input is screwy")
+					output_file.write("\n Error: data_prep() permanent dipole equivalence input is screwy")
 					sys.end()
 			else:
 				iqpcntr[iuniq+i] = -1
@@ -1194,78 +1352,53 @@ def data_prep():
 		if (nqp-nq) == 0:
 			output_file.write("\n Warning: ALL permanent dipoles are frozen!!!")
 		else:
-			output_file.write("\n Number of unique UNfrozen permanent dipoles=%5d"%(nqp-nq))
+			output_file.write("\n Number of unique UNfrozen permanent dipoles = %5d"%(nqp-nq))
 
-	# finish off list with Lagrange constraints
+	# Fill in Lagrange constraints information in iqpcntr
 	for i in range(nlgrng):
 		iqpcntr[iuniq+iuniq_p+i] = nqp+i+1
 
-	# set nqpl to the total number of row elements (charges/permanent dipoles
-	# to be independantly fit + constraints) in fitting matrix
+	# Set nqpl to the total # of row elements (charges/permanent dipoles to be independantly fit + constraints)
+	# in the fitting matrix
 	nqpl = nqp + nlgrng
 	print("iqpcntr",iqpcntr)
 	print("nqp",nqp)
 	print("nlgrng",nlgrng)
 
-	# done adding Lagrange constraints to elements list
-
-	# read in charges must now be averaged
-	# a posteriori averaging of replacement charges according
-	# to current ivary charge-combining pointers
-	#if iqopt == 3:
-	#	for i in range(iuniq-1):
-	#		qcntrs = q0[i]
-	#		tmpctr = 1.0
-	#		for j in range(i+1, iuniq):
-	#			if ivary[j] == i:
-	#				qcntrs += q0[j]
-	#				tmpctr += 1.0
-#
-	#		if tmpctr > 0.99:
-	#			qcntrs /= tmpctr
-	#			q0[i] = qcntrs
-	#			for j in range(i+1,iuniq):
-	#				if ivary[j] == i:
-	#					q0[j] = qcntrs
-
 def charge_opt():
-	# driver for the charge determinization/optimizaton
+	#########################################################################
+	# This function is the driver for the charge determinization/optimizaton.
 	#
 	# called from Main
+	#########################################################################
 	global irstrnt, awork, bwork
 
 	qold = np.zeros((iuniq))   # local variable
+	irsave = 0                 # local variable
+	nitern = 0                 # local variable
 
-	irsave = 0 # local variable
-	nitern = 0 # local variable
-
-	# qtol & maxit are criteria for convergence & maximum iterations for
-	# the non-linear optimizations.
+	# criteria for convergence & maximum iterations for the non-linear optimizations
 	qtol = 0.000001
 	maxit = 24
 
-	# only on first pass through this function (indicated by nitern= 0),
-	# if irstrnt > 0, transfer irstrnt to irsave and reset irstrnt to 0,
-	# in order to get an initial guess using a harmonic constraint.  This is
-	# done so restraint function rstran() will use a harmonic restraint.
+	# Only on first pass through this function (indicated by nitern= 0), if irstrnt > 0, transfer irstrnt to irsave
+	# and reset irstrnt to 0, in order to get an initial guess using a harmonic constraint. This is done so the
+	# restraint function rstran() will use a harmonic restraint.
 	if irstrnt > 0:
 		irsave = irstrnt
 		irstrnt = 0
 		output_file.write("\n\n Non-linear optimization requested.")
 
-	# now go do a "harmonic restraint" run, restraint= qwt(qcal[i]-q0[i])**2
+	# Now go do a "harmonic restraint" run, restraint= qwt(qcal[i]-q0[i])**2
 	# -- loop to convergence
-
 	while nitern < maxit:
 		matbld()
 	
-		# solve (Ax = b) where A and b are input, x is solution
-		#              awork x = bwork
+		# Solve (Ax = b) where A and b are input, x is solution awork x = bwork          
 		# 
 		# the solution "x" is returned in "b" (bwork)
 		# 
-		# -- condition the matrix diagonal to avoid DGETRF() detectingNN (wrapped in lu_factor)
-		#    singularity
+		# -- condition the matrix diagonal to avoid DGETRF() detectingNN (wrapped in lu_factor) singularity 
 		for jn in range(nqpl):
 			if abs(awork[jn][jn]) < 1.0E-10:
 				awork[jn][jn] = 1.0E-10
@@ -1286,8 +1419,7 @@ def charge_opt():
 		print(bwork)
 		print("irstrnt after",irstrnt)
 	
-		# -- copy solution vector "bwork" to 'calculated charges' vector
-		#    qcal and pcal
+		# -- copy solution vector "bwork" to 'calculated charges' vector qcal and pcal
 		for k in range(iuniq):
 			icntr = iqpcntr[k]
 			if icntr >= 1:
@@ -1306,27 +1438,23 @@ def charge_opt():
 				# -- frozen permanent dipole
 				pcal[k] = p0[k]
 	
-		# -- a quick check from rstrn: if irstrnt is now negative,
-		#    there are no restraints because no qwtval(i) > 0.1e-10,
-		#    so reset irsave= 0
+		# -- A quick check from rstrn: if irstrnt is now negative, there are no restraints because no qwtval(i) > 
+		#    0.1e-10, so reset irsave= 0
 		if irstrnt < 0:
 			irsave = 0
-			output_file.write("\n\n WARNING: Restraints were requested, but the restraint weights were all zero\n\n")
+			output_file.write("\n\n WARNING: Restraints were requested, but the restraint weights were all zero\n")
 	
-		# -- we're finished if it's only a "harmonic restraint" run,
-		#    but if it's a non-linear optimization (irsave>0)...
+		# -- We're finished if it's only a "harmonic restraint" run. But if it's a non-linear optimization (irsave>0),
 		#    we've only just begun (i.e. we have our initial guess)
 		if irsave <= 0:
 			return
 		else:
-			# -- it's a non-linear optimization: reset irstrnt (to now
-			#    calculate the proper non-linear restraint derivatives
-			#    in routine rstran)
+			# -- It's a non-linear optimization: reset irstrnt (to now calculate the proper non-linear restraint
+			#    derivatives in routine rstran)
 			irstrnt = irsave
 	
-		# -- begin iterative optimization loop with comparison of
-		#    old & new charges; calculate the convergence and replace
-		#    the old charges with the new
+		# -- Begin iterative optimization loop with comparison of old & new charges; calculate the convergence and
+		#    replace the old charges with the new
 		qchnge = 0.0
 		for i in range(iuniq):
 			qdiff = qcal[i] - qold[i]
@@ -1334,43 +1462,41 @@ def charge_opt():
 			qold[i] = qcal[i]
 	
 		qchnge = math.sqrt(qchnge)/iuniq
-		output_file.write("\n qchnge ={:20.10E}".format(qchnge))
+		output_file.write("\n  qchnge ={:20.10E}".format(qchnge))
 	
-		# -- if this is less than qtol then we're done
+		# -- If this is less than qtol then we're done
 		if qchnge < qtol and nitern > 1:
-			output_file.write("\n\n Convergence in%5d iterations\n\n"%nitern)
+			output_file.write("\n\n Convergence in%5d iterations\n"%nitern)
 			return
 
-		# loop again
+		# Loop again
 		nitern += 1
 
-	output_file.write("\n after %5d iterations, no convergence!"%maxit)
+	output_file.write("\n Warning: after %5d iterations, no convergence!\n"%maxit)
 
 def matbld():
-	# called from "chgopt"
+	##########################################################################################################
+	# This function build up matrices for LU decomposition:
 	#
-	# build up matrices for LU decomposition:
+	#   stage 1: copy weighted matrices a_pot and b_pot to work arrays awork and bwork (which are destroyed in
+	#            the LU decomp & back subst)
 	#
-	#   stage 1: copy weighted matrices awt and bwt to work arrays awork and bwork
-	#            (which are destroyed in the LU decomp & back subst)
+	#   stage 2: if charge restraints are to be included, then modify awork and bwork appropriately  
 	#
-	#   stage 2: if charge restraints are to be included,
-	#            then modify awork and bwork appropriately
+	# called from charge_opt()
+	##########################################################################################################
 	global a, b, awork, bwork
 
 	a = np.zeros((iuniq+iuniq_p+nlgrng,iuniq+iuniq_p+nlgrng))
 	b = np.zeros((iuniq+iuniq_p+nlgrng))
 
 	for k in range(iuniq+iuniq_p):
-		b[k] = bwt[k]
+		b[k] = b_pot[k]
 		for j in range(iuniq+iuniq_p):
-			a[j][k] = awt[j][k]
+			a[j][k] = a_pot[j][k]
 
-	# fill in the final columns & rows of A with the Lagrange
-	# constraints which keep the charge on groups of atoms to a
-	# constant
-	#
-	# note index counters!
+	# Fill in the final columns & rows of A with the Lagrange constraints which keep the charge on groups of 
+	# atoms to a constant
 	for i in range(nlgrng):
 		b[iuniq+iuniq_p+i] = grpchg[i]
 		for j in range(iuniq+iuniq_p+nlgrng):
@@ -1383,25 +1509,22 @@ def matbld():
 	print("b")
 	print(b)
 
-	# add restraint to initial charge q0[i]:
+	# Add restraint to initial charge q0 and permanent dipole p0:
 	rstran()
 
-	# build awork and bwork based on "combined and frozen centers" info:
+	# Build awork and bwork based on "combined and frozen centers" info:
 	#
-	# 1) frozen centers do not appear in the matrix of fitted charges
-	# 2) combined centers appear as one single charge center for fitting
+	# 1) Frozen centers do not appear in the matrix of fitted charges
+	# 2) Combined centers appear as one single charge center for fitting
 	#
-	# first, since we accumulate values, zero out awork & bwork up to nqpl
-	# (the independant + contraint number):
+	# First, since we accumulate values, zero out awork & bwork up to nqpl (the independant + contraint number):
 	awork = np.zeros((nqpl,nqpl))
 	bwork = np.zeros((nqpl))
 
-	# loop over all centers, building awork & bwork from A and
-	# B based on iqpcntr: for each center, iqpcntr[i] dictates which of
-	# the fitted charges it is and therefore where it goes in the matrices.
-	# If iqpcntr[j] < 1, this center is a frozen charge and it is skipped as
-	# far as forming a row in awork, and its esp contribution is subtracted
-	# from bwork to take care of it's awork jth column-element for each i.
+	# Loop over all centers, building awork & bwork from A and B based on iqpcntr: for each center, iqpcntr[i]
+	# dictates which of the fitted charges it is and therefore where it goes in the matrices. If iqpcntr[j] < 1,
+	# this center is a frozen charge and it is skipped as far as forming a row in awork, and its esp contribution
+	# is subtracted from bwork to take care of it's awork jth column-element for each i.
 	for i in range(iuniq+iuniq_p+nlgrng):
 		icntr = iqpcntr[i]
 		if icntr > 0:
@@ -1421,31 +1544,29 @@ def matbld():
 						bwork[icntr-1] -= p0[j-iuniq]*a[i][j]
 
 def rstran():
-	# routine to assign the retraint weights
-	# to the diagonal of A and to B
+	##########################################################################################################
+	# This function assigns the retraint weights to the diagonal of A and to B.
 	#
-	# called from "matbld"
-
 	#----------------------------------------------------------------------
-	# two kinds of restraint are available:
+	# Two kinds of restraint are available:
 	#
-	# a) a harmonic restraint to the initial charge.  Fine as long as there
-	#  aren't any large charges that SHOULD be large... these really feel a
-	#  strong force if they are restrained to a low value.
+	# a) A harmonic restraint to the initial charge. Fine as long as there aren't any large charges that SHOULD
+	#  be large... these really feel a strong force if they are restrained to a low value.
 	#
-	# b) a hyperbolic restraint to a charge of 0.  This gets asymptotic at
-	#  "large" values, so "large" charges aren't pulled down any stronger
-	#  than some (reasonable) limiting force.  This is a non-linear
-	#  weighting function, so the fit procedure is iterative.
+	# b) A hyperbolic restraint to a charge of 0. This gets asymptotic at "large" values, so "large" charges
+	#  aren't pulled down any stronger than some (reasonable) limiting force.  This is a non-linear weighting
+	#  function, so the fit procedure is iterative.
 	#
-	# other options for restraints to initial charge q0[i]:
-	# if requested, restrain the charges by modifying the sum-of-squares
-	# cost function derivative.  The scheme for doing this is as follows:
+	# Other options for restraints to initial charge q0[i]:
+	# if requested, restrain the charges by modifying the sum-of-squares cost function derivative. The scheme
+	# for doing this is as follows:
 	#
-	# if control variable ihfree > 0, let hydrogen charges float free
-	#                                   (i.e. reset their qwtval to 0.0).
-	#
+	# If control variable ihfree > 0, let hydrogen charges and permanent dipoles free (i.e. reset their qwtval
+	# and pwtval to 0.0).
 	#-----------------------------------------------------------------------
+	#
+	# called from matbld()
+	##########################################################################################################
 	global irstrnt, qwtval
 	qwtval = np.ndarray((iuniq))
 	qwtval.fill(qwt)
@@ -1461,16 +1582,13 @@ def rstran():
 		if ihfree > 0 and izan[i] == 1:
 			qwtval[i] = 0.0
 
+		# use of harmonic restraints
 		if irstrnt == 0:
 			a[i][i] += qwtval[i]
-
-			# q0 has the initial and/or frozen charge
-			b[i] += qwtval[i]*q0[i]
+			b[i] += qwtval[i]*q0[i] # q0 has the initial and/or frozen charge
+		# use of hyperbolic restraints
 		elif irstrnt > 0 and qwtval[i] > 0.1E-10:
-			# use analytic gradient of the hyperbola
-
-			# qcal has the current (calculated) charge
-			qwtval[i] = qwt/math.sqrt(qcal[i]*qcal[i] + 0.01)
+			qwtval[i] = qwt/math.sqrt(qcal[i]*qcal[i] + 0.01) # qcal has the current (calculated) charge
 			a[i][i] += qwtval[i]
 
 	for i in range(iuniq_p):
@@ -1478,22 +1596,19 @@ def rstran():
 		if ihfree > 0 and izan_p[i] == 1:
 			pwtval[i] = 0.0
 
+		# use of harmonic restraints
 		if irstrnt == 0:
 			a[i_idx][i_idx] += pwtval[i]
-
-			# p0 has the initial and/or frozen dipole
-			b[i_idx] += pwtval[i]*p0[i]
+			b[i_idx] += pwtval[i]*p0[i] # p0 has the initial and/or frozen dipole
+		# use of hyperbolic restraints
 		elif irstrnt > 0 and pwtval[i] > 0.1E-10:
-			# use analytic gradient of the hyperbola
-
-			# pcal has the current (calculated) dipol
-			pwtval[i] = pwt/math.sqrt(pcal[i]*pcal[i] + 0.01)
+			pwtval[i] = pwt/math.sqrt(pcal[i]*pcal[i] + 0.01) # pcal has the current (calculated) dipole
 			a[i_idx][i_idx] += pwtval[i]
 
 	print("qwtval after ",qwtval)
 	print("pwtval after ",pwtval)
 
-	# if all qwtval[i] and pwtval[i] are 0.0, no restraints so reset irstrnt= -1
+	# If all qwtval[i] and pwtval[i] are 0.0, no restraints so reset irstrnt= -1
 	for i in range(iuniq):
 		if qwtval[i] > 0.1E-10:
 			return
@@ -1504,7 +1619,16 @@ def rstran():
 	irstrnt = -1
 
 def calc_dip():
-	# function to calculate the dipole moments
+	#############################################################################
+	# This function calculates the dipole moments, including
+	#  - dipol_mol: Molecular dipole components
+	#  - dipmom_mol: Molecular dipole magnitude
+	#  - dipind: Atomic induced dipole components (global frame)
+	#  - dipperm: Atomic permanent dipole components (global frame)
+	#  - dipindperm: Atomic induced + permanent dipole components (global frame)
+	#
+	# called from Main
+	#############################################################################
 	global dipol_mol, dipmom_mol, dipind, dipperm, dipindperm
 
 	dipol_mol = np.zeros((3,nmol))
@@ -1513,7 +1637,7 @@ def calc_dip():
 	dipperm = np.zeros((3,iuniq))
 	dipindperm = np.zeros((3,iuniq))
 
-	# calculate the induced dipole and permanent dipole on each atom (global frame)
+	# Calculate atomic induced and permanent dipoles (global frame)
 	if ipol > 0:
 		for imol in range(nmol):
 			natm = iend[imol]-ibeg[imol]+1
@@ -1539,7 +1663,7 @@ def calc_dip():
 							# The permanent dipole
 							dipperm[k][i_idx] += pcal[j_idx]*L2G_list[imol][3*i+k][j]
 
-	# calculate molecular dipole moment and quadrapole moment
+	# Calculate atomic induced + permanent dipole and molecular dipoles
 	for imol in range(nmol):
 		for i in range(ibeg[imol], iend[imol]+1):
 			for j in range(3):
@@ -1548,28 +1672,27 @@ def calc_dip():
 
 		dipmom_mol[imol] = math.sqrt(dipol_mol[0][imol]**2 + dipol_mol[1][imol]**2 + dipol_mol[2][imol]**2)
 
-	# convert dipoles from a.u. to debyes
+	# Convert molecular dipole from a.u. to debyes
 	dipol_mol *= au2D
 	dipmom_mol *= au2D
 
 def reornt():
-	##############################################
-	# translates molecule to center of mass and  #
-	# reorients it along principal axes          #
-	# in preparation for dipole and quadrupole   #
-	# moment calculation.                        #
-	##############################################
+	############################################################################################
+	# This function translates molecule to center of mass and reorients it along principal axes
+	# of rotation in preparation for dipole and quadrupole moment calculation.
+	#
+	# called from Main
+	############################################################################################
 
 	# ---- ATOMIC WEIGHT ARRAY FOR CENTER OF MASS ----
 	#
 	#  20 elements were originally handled: H(1) - Ca(20)
 	# 103 elements are now considered:      H(1) - Lr(103)
 	#
-	# Atomic weight from The Merck Index - Thirteeth edition
-	# Merck & Co., INC., Whitehouse Station, NJ, 2001
+	# Atomic weight from The Merck Index - Thirteeth edition, Merck & Co., INC., Whitehouse Station,
+	# NJ, 2001
 	#
-	# F.-Y. Dupradeau & P. Cieplak
-	# http://q4md-forcefieldtools.org/
+	# F.-Y. Dupradeau & P. Cieplak, http://q4md-forcefieldtools.org/
 	global co, cmas_mol, dipol_mol_com, dipindperm_com
 
 	cmas_mol = np.ndarray((3,nmol))
@@ -1577,33 +1700,17 @@ def reornt():
 	co = np.ndarray((3,iuniq))
 	dipindperm_com = np.zeros((3,iuniq))
 
-	wt = [1.0079,4.0026,
-	6.9410,9.0122,10.8110,12.0107,
-	14.0067,15.9994,18.9984,20.1797,
-	22.9898,24.3050,26.9815,28.0855,
-	30.9738,32.0650,35.4530,39.9480,
-	39.0983,40.0780,44.9559,47.8670,
-	50.9415,51.9961,54.9380,55.8450,
-	58.9332,58.6934,63.5460,65.3900,
-	69.7230,72.6400,74.9216,78.9600,
-	79.9040,83.8000,85.4678,87.6200,
-	88.9058,91.2240,92.9064,95.9400,
-	97.9072,101.0700,102.9055,106.4200,
-	107.8682,112.4110,114.8180,118.7100,
-	121.7600,127.6000,126.9045,131.2930,
-	132.9054,137.3270,138.9055,140.1160,
-	140.9076,144.2400,144.9127,150.3600,
-	151.9640,157.2500,158.9253,162.5000,
-	164.9303,167.2590,168.9342,173.0400,
-	174.9670,178.4900,180.9479,183.8400,
-	186.2070,190.2300,192.2170,195.0780,
-	196.9665,200.5900,204.3833,207.2000,
-	208.9804,208.9824,209.9871,222.0176,
-	223.0197,226.0254,227.0277,232.0381,
-	231.0359,238.0289,237.0482,244.0642,
-	243.0614,247.0704,247.0703,251.0796,
-	252.0830,257.0951,258.0984,259.1010,
-	262.1097]
+	wt = [1.0079,4.0026,6.9410,9.0122,10.8110,12.0107,14.0067,15.9994,18.9984,20.1797,
+	22.9898,24.3050,26.9815,28.0855,30.9738,32.0650,35.4530,39.9480,39.0983,40.0780,
+	44.9559,47.8670,50.9415,51.9961,54.9380,55.8450,58.9332,58.6934,63.5460,65.3900,
+	69.7230,72.6400,74.9216,78.9600,79.9040,83.8000,85.4678,87.6200,88.9058,91.2240,
+	92.9064,95.9400,97.9072,101.0700,102.9055,106.4200,107.8682,112.4110,114.8180,118.7100,
+	121.7600,127.6000,126.9045,131.2930,132.9054,137.3270,138.9055,140.1160,140.9076,144.2400,
+	144.9127,150.3600,151.9640,157.2500,158.9253,162.5000,164.9303,167.2590,168.9342,173.0400,
+	174.9670,178.4900,180.9479,183.8400,186.2070,190.2300,192.2170,195.0780,196.9665,200.5900,
+	204.3833,207.2000,208.9804,208.9824,209.9871,222.0176,223.0197,226.0254,227.0277,232.0381,
+	231.0359,238.0289,237.0482,244.0642,243.0614,247.0704,247.0703,251.0796,252.0830,257.0951,
+	258.0984,259.1010,262.1097]
 
 	for imol in range(nmol):
 		# ----- CALCULATE THE CENTER OF MASS -----
@@ -1625,13 +1732,15 @@ def reornt():
 		if ipol > 0:
 			mominrot(s, dipindperm, dipindperm_com, imol)
 	
-	# convert center of mass from bohr to angstroms
+	# Convert center of mass from bohr to angstroms
 	cmas_mol *= au2A
 
 def cmass(wt, imol):
+	#################################################################
+	# This function calculates the center of mass of the molecule.
+	#
 	# called from reornt()
-
-	# THIS FUNCTION CALCULATES THE CENTER OF MASS OF THE MOLECULE.
+	#################################################################
 	sumx, sumy, sumz, Sum = 0.0, 0.0, 0.0, 0.0
 	for i in range(ibeg[imol], iend[imol]+1):
 		idx = izan[i]-1
@@ -1642,23 +1751,26 @@ def cmass(wt, imol):
 	return sumx/Sum, sumy/Sum, sumz/Sum
 
 def cmove(xc, yc, zc, imol):
+	#################################################################
+	# This function moves the origin to the center of mass.
+	#
 	# called from reornt()
-
-	# THIS FUNCTION MOVES THE ORIGIN TO THE CENTER OF MASS.
+	#################################################################
 	for i in range(ibeg[imol], iend[imol]+1):
 		co[0][i] = crd[0][i] - xc
 		co[1][i] = crd[1][i] - yc
 		co[2][i] = crd[2][i] - zc
 
 def momin(wt, imol):
+	################################################################################################
+	# This function calculates the moments of inertia tensor and the principal axes of moment of
+	# inertia of the molecule. It then reorients the molecule along the principal axes (with the 
+	# origin at the center of mass) in preparation for calculation of quadrapole moment components.
+	#  - ain: The moments of inertia tensor
+	#  - s: The principal axes of moment of inertia matrix
+	#
 	# called from reornt()
-
-	# THIS FUNCTION CALCULATES THE MOMENTS OF INERTIA TENSOR AND
-	# THE PRINCIPAL AXES OF ROTATION OF THE MOLECULE.  IT THEN
-	# REORIENTS THE MOLECULE ALONG THE PRINCIPAL AXES OF
-	# ROTATION (WITH THE ORIGIN AT THE CENTER OF MASS) IN
-	# PREPARATION FOR CALCULATION OF QUADRAPOLE MOMENT
-	# COMPONENTS.
+	################################################################################################
 	ain = np.ndarray((3,3))
 	sxx, syy, szz, sxy, sxz, syz = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 	for i in range(ibeg[imol], iend[imol]+1):
@@ -1671,7 +1783,7 @@ def momin(wt, imol):
 		szz += wt[idx]*(xx+yy)
 		sxy += wt[idx]*co[0][i]*co[1][i]
 		sxz += wt[idx]*co[0][i]*co[2][i]
-		syz += wt[idx]*co[1][i]*co[2][i]  # need confirm
+		syz += wt[idx]*co[1][i]*co[2][i]
 	ain[0][0] = sxx
 	ain[1][1] = syy
 	ain[2][2] = szz
@@ -1683,27 +1795,33 @@ def momin(wt, imol):
 	ain[2][1] = ain[1][2]
 	print("ain before diagm",ain)
 
-	#  ----- CALCULATE PRINCIPAL AXES OF INERTIA -----
-	eigvals, s = np.linalg.eig(ain)
-	print("eigvals after diagm",eigvals)
-	print("s before sort",s)
-
-	for i in range(2):
-		for j in range(i+1,3):
-			if eigvals[i] > eigvals[j]:
-				eigvals[i], eigvals[j] = eigvals[j], eigvals[i]
-				for k in range(3):
-					s[k][i], s[k][j] = s[k][j], s[k][i]
+	#  ----- CALCULATE PRINCIPAL AXES OF MOMENT OF INERTIA -----
+	eigvals, s = np.linalg.eigh(ain)
+	#print("eigvals after diagm",eigvals)
+	#print("s before sort",s)
+#
+	#for i in range(2):
+	#	for j in range(i+1,3):
+	#		if eigvals[i] > eigvals[j]:
+	#			eigvals[i], eigvals[j] = eigvals[j], eigvals[i]
+	#			for k in range(3):
+	#				s[k][i], s[k][j] = s[k][j], s[k][i]
 
 	print("eigvals after sort",eigvals)
 	print("s after sort",s)
 	return s
 
 def mominrot(s, vecin, vecout, imol):
+	########################################################################################
+	# This function rotate the following along the principle axes of moment of inertia.
+	#  - dipol_mol: Molecular dipole components
+	#  - dipindperm: Atomic induced + permanent dipole components
+	#  - co: Atomic coordinates
+	#
 	# called from reornt()
-
-	# THIS FUNCTION ROTATE MOLECULES/DIPOLES ALONG THE PRINCIPLE AXES OF MOMENT OF INERTIA.
+	########################################################################################
 	if len(vecin[0]) == nmol:
+		# Rotates dipol_mol
 		xs = vecin[0][imol]*s[0][0] + vecin[1][imol]*s[1][0] + vecin[2][imol]*s[2][0]
 		ys = vecin[0][imol]*s[0][1] + vecin[1][imol]*s[1][1] + vecin[2][imol]*s[2][1]
 		zs = vecin[0][imol]*s[0][2] + vecin[1][imol]*s[1][2] + vecin[2][imol]*s[2][2]
@@ -1711,6 +1829,7 @@ def mominrot(s, vecin, vecout, imol):
 		vecout[1][imol] = ys
 		vecout[2][imol] = zs
 	else:
+		# Rotates dipindperm or co
 		for i in range(ibeg[imol], iend[imol]+1):
 			xs = vecin[0][i]*s[0][0] + vecin[1][i]*s[1][0] + vecin[2][i]*s[2][0]
 			ys = vecin[0][i]*s[0][1] + vecin[1][i]*s[1][1] + vecin[2][i]*s[2][1]
@@ -1720,10 +1839,14 @@ def mominrot(s, vecin, vecout, imol):
 			vecout[2][i] = zs
 
 def calc_quad(quad, coord, dip):
-	# function to calculate the molecular quadrupole moments
+	############################################################################################
+	# This function calculates the molecular quadrupole moments (before or after reorientation).
+	#
+	# called from Main
+	############################################################################################
 	for imol in range(nmol):
 		for i in range(ibeg[imol], iend[imol]+1):
-
+			# Calculates quadrupole contributed by permanent charge
 			qqxx = 3.0*qcal[i]*coord[0][i]*coord[0][i]
 			qqyy = 3.0*qcal[i]*coord[1][i]*coord[1][i]
 			qqzz = 3.0*qcal[i]*coord[2][i]*coord[2][i]
@@ -1736,6 +1859,7 @@ def calc_quad(quad, coord, dip):
 			quad[5][imol] += 3.0*qcal[i]*coord[1][i]*coord[2][i] # YZ
 
 			if ipol > 0:
+				# Calculates quadrupole contributed by permanent and induced dipoles
 				qdxx = 6.0*dip[0][i]*coord[0][i]
 				qdyy = 6.0*dip[1][i]*coord[1][i]
 				qdzz = 6.0*dip[2][i]*coord[2][i]
@@ -1747,23 +1871,31 @@ def calc_quad(quad, coord, dip):
 				quad[4][imol] += 3.0*(dip[0][i]*coord[2][i] + dip[2][i]*coord[0][i]) # XZ
 				quad[5][imol] += 3.0*(dip[1][i]*coord[2][i] + dip[2][i]*coord[1][i]) # YZ
 
-	# convert quadrupoles to debye*angstroms
+	# Convert quadrupoles from a.u. to debye*angstroms
 	quad *= au2D*au2A
 
 def wrt_qout():
+	########################################################################################
+	# This function writes out the qout file. The follwoing sections appear molecule-wisely.
+	#
 	# called from Main
-
+	########################################################################################
 	qout_file = open(qout, 'w')
 	qout_file.write("All values are reported in atomic units\n")
 
-	ioff = 0
+	ioff = 0   # local variable
 	for imol in range(nmol):
+		# 1. Title
 		qout_file.write("%FLAG TITLE\n")
 		qout_file.write(" molecule %d: %s"%(imol+1, title[imol]))
+
+		# 2. Atomic coordinates
 		qout_file.write("\n%FLAG ATOM CRD: I4,3E16.7\n")
 		qout_file.write(" atm.no      X               Y               Z\n")
 		for i in range(ibeg[imol], iend[imol]+1):
 			qout_file.write("{:4d}{:16.7E}{:16.7E}{:16.7E}\n".format(i+1, crd[0][i], crd[1][i], crd[2][i]))
+
+		# 3. Atomic charges
 		qout_file.write("\n%FLAG ATOM CHRG: 2(I4,X7),I4,X2,E16.7\n")
 		qout_file.write(" atm.no   element.no   ivary      q(opt)\n")
 		for i in range(ibeg[imol], iend[imol]+1):
@@ -1771,9 +1903,9 @@ def wrt_qout():
 
 		if ipol > 0:
 			if ipermdip > 0:
+				# 4. Permanent dipoles (local frame)
 				qout_file.write("\n%FLAG PERM DIP LOCAL: 3(I4,X5),I4,X2,E16.7\n")
 				qout_file.write(" dip.no   atm.no   ref.no   ivary      p(opt)\n")
-				#for atm1 in sorted(dict12_list[imol]):
 				natm = iend[imol]-ibeg[imol]+1
 				for atm1 in range(natm):
 					if atm1 in dict12_list[imol]:
@@ -1786,11 +1918,13 @@ def wrt_qout():
 								qout_file.write("{:4d}     {:4d}     {:4d}     {:4d}  {:16.7E}\n".format(ioff+1, atm1+1, atm2+1, ivary_p[ioff], pcal[ioff]))
 								ioff += 1
 
+				# 5. Permanent dipoles (global frame)
 				qout_file.write("\n%FLAG PERM DIP GLOBAL: I4,3E16.7\n")
 				qout_file.write(" atm.no      X               Y               Z\n")
 				for i in range(ibeg[imol], iend[imol]+1):
 					qout_file.write("{:4d}{:16.7E}{:16.7E}{:16.7E}\n".format(i+1, dipperm[0][i], dipperm[1][i], dipperm[2][i]))
 
+			# 6. Induced dipoles (global frame)
 			qout_file.write("\n%FLAG IND DIP GLOBAL: I4,3E16.7\n")
 			qout_file.write(" atm.no      X               Y               Z\n")
 			for i in range(ibeg[imol], iend[imol]+1):
@@ -1800,40 +1934,20 @@ def wrt_qout():
 	qout_file.close()
 
 def evlchi():
-	# called from Main
-	#
-	# Evaluate chi-square for linear function espclci = sum_j(qj*termij),
-	# where j = number of terms, qj is the coefficient to termij, and
-	# chi-square is the merit function: chi-square = sum_i((espi-espclci)**2),
+	###############################################################################################################
+	# This function valuates chi-square for linear function espclci = sum_j(qj*termij), where j = number of terms,
+	# qj is the coefficient to termij, and chi-square is the merit function: chi-square = sum_i((espi-espclci)**2),
 	# where i is the number of data points for which esp is known.
-
-	#cross = 0.0   # local variable
-	#ssyclc = 0.0  # local variable
-
-	#for j in range(iuniq):
-	#	cross += qcal[j]*bpot[j]
-	#	for k in range(iuniq):
-	#		ssyclc += qcal[j]*qcal[k]*apot[j][k]
-	#if ipermdip > 0:
-	#	for j in range(iuniq_p):
-	#		cross += pcal[j]*bpot[iuniq+j]
-	#		for k in range(iuniq_p):
-	#			ssyclc += pcal[j]*pcal[k]*apot[iuniq+j][iuniq+k]
-
-	#chipot = ssvpot - 2.0*cross + ssyclc
-	chipot = 0.0
-
-	# read in the electrostatic potential points used in the fitting,
-	# calculate esp using existing charges, and write out both esp's & residual
-
-	# open the file containing the qm esp points & read in the no. of points
+	#
+	# called from wrt_out()
+	###############################################################################################################
 	espot_file = open(espot, 'r')
-
 	if ioutopt == 1:
 		esout_file = open(esout, 'w')
 
+	chipot = 0.0
 	for imol in range(nmol):
-		chipot_mol = 0.0
+		# Read the metainfo of molecule imol
 		line = espot_file.readline().split()
 		natm, nesp = int(line[0]), int(line[1])
 		if ioutopt == 1:
@@ -1841,29 +1955,35 @@ def evlchi():
 			esout_file.write("nesp: %d   natm: %d\n"%(nesp, natm))
 			esout_file.write("      X         Y         Z        esp_qm      esp_clc       diff\n")
 	
+		# Skip the atomic coordinate and atom type info of molecule imol
 		for i in range(natm):
 			line = espot_file.readline()
 	
+		chipot_mol = 0.0
 		for i in range(nesp):
+			# Read in the esp points used in the fitting
 			line = espot_file.readline().split()
 			if not line:
-				output_file.write("\n unexpected eof in %s"%espot)
+				output_file.write("\n Error: unexpected eof in %s"%espot)
 				sys.exit()
 			espqmi, xi, yi, zi = float(line[0]),float(line[1]),float(line[2]),float(line[3])
-			espclc = 0.0
-	
-			for j in range(ibeg[imol], iend[imol]+1):
-				espclc += mat_out[i][j]*qcal[j]
 
+			espclc = 0.0
+			# Calculate esp contributed from fitted charges
+			for j in range(ibeg[imol], iend[imol]+1):
+				espclc += mat_pot[i][j]*qcal[j]
+
+			# Calculate esp contributed from fitted permanent dipoles
 			if ipermdip > 0:
 				for j in range(ibeg_p[imol], iend_p[imol]+1):
-					espclc += mat_out[i][iuniq+j]*pcal[j]
+					espclc += mat_pot[i][iuniq+j]*pcal[j]
 	
+			# Caculate the esp residual
 			vresid = espqmi - espclc
 			chipot_mol += vresid**2
 
+			# Write the coords, qm esps, calculated esps and residuals in the esout file
 			if ioutopt == 1:
-				# write the coords, qm esps, calculated esps and residuals
 				esout_file.write("%10.5f%10.5f%10.5f%12.5f%12.5f%12.5f\n"%(xi,yi,zi,espqmi,espclc,vresid))
 
 		chipot += chipot_mol
@@ -1877,20 +1997,27 @@ def evlchi():
 		esout_file.close()
 
 	rmse = math.sqrt(chipot/tot_nesp)
-	rrmse = rmse/math.sqrt(ssvpot)
+	rrmse = math.sqrt(chipot/ssvpot)
 
 	print("chipot: ",chipot)
 	return chipot, rmse, rrmse
 
 def wrt_out():
+	########################################################################################
+	# This function writes out the fitting results and statistics into the output file.
+	#
 	# called from Main
+	########################################################################################
 	global rmse, rrmse
 
-	# ---- print the optimized charges and coordinates ----
+	output_file.write("\n -----------------------")
+	output_file.write("\n Fitting Results Summary")
+	output_file.write("\n -----------------------\n")
+
 	for imol in range(nmol):
 		output_file.write(" molecule %d: %s"%(imol+1, title[imol]))
 
-	# print the charges
+	# Print the charges
 	output_file.write("\n          Point Charges Before & After Optimization")
 	output_file.write("\n atm.no   element.no   q(init)        q(opt)     ivary    d(rstr)/dq")
 
@@ -1906,6 +2033,7 @@ def wrt_out():
 
 	output_file.write("\n Sum over the calculated charges: %10.3f\n"%chge)
 
+	# Print the permanent dipoles
 	if ipermdip > 0:
 		output_file.write("\n       Permanent Dipoles Before & After Optimization")
 		output_file.write("\n dip.no   element.no   p(init)        p(opt)     ivary    d(rstr)/dp")
@@ -1918,18 +2046,23 @@ def wrt_out():
 				output_file.write("\n")
 				icnt += 1
 
-	# calculate residuals sum-of-squares (chi-square) for the esp's
+	# Calculate statistics for the esp's
 	chipot,rmse,rrmse = evlchi()
 
-	# now write all these stuff out
-	output_file.write("\n\n        Statistics of the fitting:")
-	output_file.write("\n  The initial sum of squares (ssvpot)  {:13.7E}".format(ssvpot))
-	output_file.write("\n  The residual sum of squares (RSS)    {:13.7E}".format(chipot))
-	output_file.write("\n  The root-mean-squared error (RMSE)   {:13.7E}".format(rmse))
-	output_file.write("\n  The relative RMSE (RRMSE)            {:13.7E}".format(rrmse))
+	# Write statistics out
+	output_file.write("\n --------------------------")
+	output_file.write("\n Fitting Statistics Summary")
+	output_file.write("\n --------------------------")
+	output_file.write("\n The initial sum of squares  (ssvpot = sum_i(espi**2))          {:13.7E}".format(ssvpot))
+	output_file.write("\n The residual sum of squares (RSS = sum_i((espi-espclci)**2))   {:13.7E}".format(chipot))
+	output_file.write("\n The root-mean-squared error (RMSE = sqrt(RSS/N))               {:13.7E}".format(rmse))
+	output_file.write("\n The relative RMSE           (RRMSE = sqrt(RSS/ssvpot))         {:13.7E}".format(rrmse))
 
-	# ----- print the dipole, quadrupole and center of mass ----
-	output_file.write("\n\n Center of Mass (Angst.):")
+	# Print the center of mass, (original and reoriented) molecular dipole and quadrupole
+	output_file.write("\n\n ---------------------------")
+	output_file.write("\n Molecular Multipole Summary")
+	output_file.write("\n ---------------------------")
+	output_file.write("\n Center of Mass (Angst.):")
 	for imol in range(nmol):
 		output_file.write("\n #MOL          X          Y          Z")
 		output_file.write("\n %3d     %10.5f %10.5f %10.5f"%(imol+1,cmas_mol[0][imol], cmas_mol[1][imol], cmas_mol[2][imol]))
@@ -1954,16 +2087,20 @@ def wrt_out():
 		output_file.write("\n        Y %10.5f %10.5f"%(quad_mol_com[3][imol],quad_mol_com[1][imol]))
 		output_file.write("\n        Z %10.5f %10.5f %10.5f"%(quad_mol_com[4][imol], quad_mol_com[5][imol], quad_mol_com[2][imol]))
 
-###### get the file names ######
+#-----------------------------------------------------------------------
+# The beginning of the main program
+#-----------------------------------------------------------------------
+
+###### Get the file names ######
 Input,output,qin,polariz,qout,espot,esout = file_in()
 
 input_file = open(Input, 'r')
 output_file = open(output, 'w')
 
-###### read the atomic centers and q0's, then read the potential inf ######
+###### Read the control parameters ######
 read_in()
 
-# if nmol > 1, this is a multiple molecule run
+# If nmol > 1, this is a multiple molecule run;
 # otherwise it is a single molecule run
 if nmol > 1:
 	mult_mol()
@@ -1975,13 +2112,13 @@ input_file.close()
 if ipol > 0:
 	read_pol_dict()
 
-###### read in the qm esp, forming the matrices apot(awt) and bpot(bwt)
+###### Read in the qm esp, forming the matrices a_pot and b_pot
 matpot()
 
-###### initialize q0 according to iqopt
+###### Initialize q0 and p0 according to iqopt
 init_q0_p0()
 
-###### process the input (freezing, equivalencing charges)
+###### Process the input (freezing, equivalencing charges)
 data_prep()
 
 qcal = np.zeros((iuniq))
@@ -1989,7 +2126,7 @@ if ipermdip > 0:
 	pcal = np.zeros((iuniq_p))
 
 if irstrnt == 2:
-	# if irstrnt= 2 then we just want to compare esp's to q0's
+	# If irstrnt= 2 then we just want to compare esp's to q0's
 	for k in range(iuniq):
 		qcal[k] = q0[k]
 	qwt = 0.0
@@ -1999,27 +2136,29 @@ if irstrnt == 2:
 			pcal[k] = p0[k]
 		pwt = 0.0
 else:
-	# do the charge fitting
+	# Do the charge fitting
 	charge_opt()
 
-# now calculate dipole moments
+###### Calculate dipole moments ######
 calc_dip()
 
-###### center & reorient molecule in preparation for dipole & quadrupole ######
+###### Center & reorient molecule in preparation for dipole & quadrupole ######
 reornt()
 
-# now calculate quadrupole moments
+###### Calculate quadrupole moments ######
 quad_mol = np.zeros((6,nmol))
 quad_mol_com = np.zeros((6,nmol))
 calc_quad(quad_mol, crd, dipindperm)
 calc_quad(quad_mol_com, co, dipindperm_com)
 
-# now write charges & permanent dipoles
+###### Write charges & permanent dipoles ######
 wrt_qout()
 
-# now calculate and print sum-of-squares, rmse, and rrmse
+###### Calculate and print sum-of-squares, rmse, and rrmse ######
 wrt_out()
 
 output_file.close()
 
-
+#-----------------------------------------------------------------------
+# The end of the main program
+#-----------------------------------------------------------------------
