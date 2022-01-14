@@ -22,14 +22,13 @@ Input,output,qin,qout,espot,esout,polariz = [None]*7
 input_file,output_file,qin_file,qout_file,espot_file,esout_file,polariz_file = [None]*7
 
 ###### infoa ######
-iuniq,iuniq_p,nqpl,ihfree,irstrnt = 0,0,0,1,1
+iuniq,iuniq_p,nqpl,ihfree,irstrnt,ireornt = 0,0,0,1,1,0
 
 ###### runlab ######
 title = None
 
 ###### espcom ######
 a_pot,b_pot = [None]*2
-#ssvpot,rmse,rrmse,nesp,tot_nesp,max_nesp = 0.0,0.0,0.0,0,0
 ssvpot,tot_nesp = 0.0,0
 
 ###### calcul ###### 
@@ -84,8 +83,8 @@ def read_in():
  	#
  	# called from Main
  	#############################################
-	global ioutopt,nmol,iqopt,irstrnt,ihfree,qwt,pwt
-	global ipol,ipermdip,igdm,exc12,exc13,virtual
+	global nmol,iqopt,ihfree,irstrnt,qwt,ioutopt,ireornt
+	global ipol,igdm,exc12,exc13,ipermdip,pwt,virtual
 
 	output_file.write('\n -----------------------------------------------')
 	output_file.write('\n              Py_RESP Beta Version')
@@ -99,18 +98,24 @@ def read_in():
 	# Read in control parameters
 	if 'cntrl' in f90nml.read(Input):
 		cntrl_nml = f90nml.read(Input)['cntrl']
-		ioutopt = cntrl_nml['ioutopt'] if 'ioutopt' in cntrl_nml else 0
+		# Common control parameters
 		nmol = cntrl_nml['nmol'] if 'nmol' in cntrl_nml else 1
 		iqopt = cntrl_nml['iqopt'] if 'iqopt' in cntrl_nml else 1
-		irstrnt = cntrl_nml['irstrnt'] if 'irstrnt' in cntrl_nml else 1
 		ihfree = cntrl_nml['ihfree'] if 'ihree' in cntrl_nml else 1
+		irstrnt = cntrl_nml['irstrnt'] if 'irstrnt' in cntrl_nml else 1
 		qwt = cntrl_nml['qwt'] if 'qwt' in cntrl_nml else 0.0005
-		pwt = cntrl_nml['pwt'] if 'pwt' in cntrl_nml else 0.0005
+		ioutopt = cntrl_nml['ioutopt'] if 'ioutopt' in cntrl_nml else 0
+		ireornt = cntrl_nml['ireornt'] if 'ireornt' in cntrl_nml else 0
+
+		# With dipole
 		ipol = cntrl_nml['ipol'] if 'ipol' in cntrl_nml else 5
-		ipermdip = cntrl_nml['ipermdip'] if 'ipermdip' in cntrl_nml else 1
 		igdm = cntrl_nml['igdm'] if 'igdm' in cntrl_nml else 1
 		exc12 = cntrl_nml['exc12'] if 'exc12' in cntrl_nml else 0
 		exc13 = cntrl_nml['exc13'] if 'exc13' in cntrl_nml else 0
+
+		# With permanent dipole
+		ipermdip = cntrl_nml['ipermdip'] if 'ipermdip' in cntrl_nml else 1
+		pwt = cntrl_nml['pwt'] if 'pwt' in cntrl_nml else 0.0005
 		virtual = cntrl_nml['virtual'] if 'virtual' in cntrl_nml else 0
 	else:
 		output_file.write('\n Error: Must use namelist input\n')
@@ -118,7 +123,8 @@ def read_in():
 
 	output_file.write('\n nmol        = %d   iqopt       = %d'%(nmol, iqopt))
 	output_file.write('\n ihfree      = %d   irstrnt     = %d'%(ihfree, irstrnt))
-	output_file.write('\n ioutopt     = %d   qwt         = %.8f'%(ioutopt, qwt))
+	output_file.write('\n ioutopt     = %d   ireornt     = %d'%(ioutopt, ireornt))
+	output_file.write('\n qwt         = %.8f'%(qwt))
 	if ipol > 0:
 		output_file.write('\n ipol        = %d   igdm        = %d'%(ipol, igdm))
 		output_file.write('\n exc12       = %d   exc13       = %d'%(exc12, exc13))
@@ -161,7 +167,7 @@ def sing_mol():
 	wtmol[0] = float(input_file.readline())
 	output_file.write("\n\n Molecule 1 weight:%10.3f \n"%wtmol[0])
 	title.append(input_file.readline())
-	output_file.write(" Molecule 1 name: ",title[0])
+	output_file.write(" Molecule 1 name: %s"%title[0])
 
 	# Read in charge, number of charge centers
 	line = input_file.readline().split()
@@ -328,11 +334,7 @@ def mult_mol():
 	lagrange(-99, -1)
 
 	# Perform inter-molecule equivalencing
-	print("before equiv, ivary",ivary)
-	print("before equiv, ivary_p",ivary_p)
 	mol_equiv()
-	print("after equiv, ivary",ivary)
-	print("after equiv, ivary_p",ivary_p)
 
 	input_summary(dip_num)
 
@@ -544,7 +546,6 @@ def read_pol_dict():
 		for i in range(2, len(line)):
 			pol_dict[line[i].lower()] = pol_dict[line[1].lower()]
 		line = polariz_file.readline().split()
-	print("pol_dict",pol_dict)
 
 def neighbors(imol):
 	####################################################################################
@@ -772,7 +773,7 @@ def matpot():
 			line = espot_file.readline().split()
 			crd[0][ioff], crd[1][ioff], crd[2][ioff] = float(line[0]),float(line[1]),float(line[2])
 			if ipol > 0:
-				atype.append(line[3].lower())
+				atype.append(line[4].lower())
 			output_file.write("\n {:4d}{:16.7E}{:16.7E}{:16.7E}".format(i+1, crd[0][ioff], crd[1][ioff], crd[2][ioff]))
 			ioff += 1
 		output_file.write("\n\n")
@@ -806,9 +807,9 @@ def matpot():
 
 				AinvQ, AinvP, L2G = bld_AinvQP(imol, atype)
 				AinvP_I = AinvP + np.identity(3*natm)
-				print()
-				print("AinvP_I")
-				print(AinvP_I)
+				#print()
+				#print("AinvP_I")
+				#print(AinvP_I)
 
 				AinvP_L2G_list.append(np.matmul(AinvP,L2G))
 				L2G_list.append(L2G)
@@ -816,10 +817,10 @@ def matpot():
 				AinvQ = bld_AinvQP(imol, atype)
 
 			AinvQ_list.append(AinvQ)
-			print()
-			print("AinvQ",AinvQ)
-			print()
-			print("AinvP",AinvP)
+			#print()
+			#print("AinvQ",AinvQ)
+			#print()
+			#print("AinvP",AinvP)
 
 		#############################################
 		# Section 2.4. build a_pot, b_pot and mat_pot #
@@ -832,7 +833,7 @@ def matpot():
 			line = espot_file.readline().split()
 			if not line:
 				output_file.write("\n Error: premature end of potential file")
-				sys.end()
+				sys.exit()
 			espi, xi, yi, zi = float(line[0]),float(line[1]),float(line[2]),float(line[3])
 			ssvpot += wt2*espi*espi
 
@@ -848,16 +849,12 @@ def matpot():
 				j_idx = j-ibeg[imol]
 
 				# Calculate damping factors fe and f0 for the pGM model
-				if igdm > 0:
-					if ipol == 5:
-						polj, radj = pol_dict[atype[j_idx]][0], pol_dict[atype[j_idx]][1]
-						fe, ft, f0 = damp_facts(rij, 1, polj, 0, radj)
-						print("i, j, fe, ft, f0",i, j, fe, ft, f0)
-						rij /= f0
-						rij3 /= fe
-					else:
-						output_file.write("\n Error: igdm=1 only works for the pGM model (ipol=5) !!!")
-						sys.end()
+				if ipol == 5 and igdm > 0:
+					polj, radj = pol_dict[atype[j_idx]][0], pol_dict[atype[j_idx]][1]
+					fe, ft, f0 = damp_facts(rij, 1, polj, 0, radj)
+					#print("i, j, fe, ft, f0",i, j, fe, ft, f0)
+					rij /= f0
+					rij3 /= fe
 
 				# Build dismatq (and dismatdip)
 				dismatq[j_idx] = 1/rij
@@ -949,14 +946,14 @@ def matpot():
 	for j in range(iuniq+iuniq_p-1):
 		for k in range(j+1, iuniq+iuniq_p):
 			a_pot[k][j] = a_pot[j][k]
-	print()
-	print("mat_pot")
-	print(mat_pot)
-	print()
-	print("a_pot")
-	print(a_pot)
-	print("b_pot")
-	print(b_pot)
+	#print()
+	#print("mat_pot")
+	#print(mat_pot)
+	#print()
+	#print("a_pot")
+	#print(a_pot)
+	#print("b_pot")
+	#print(b_pot)
 
 	espot_file.close()
 
@@ -1016,7 +1013,7 @@ def bld_AinvQP(imol, atype):
 			poli, polj = pol_dict[atype[i]][0], pol_dict[atype[j]][0]
 			radi, radj = pol_dict[atype[i]][1], pol_dict[atype[j]][1]
 			fe, ft, f0 = damp_facts(rij, poli, polj, radi, radj)
-			print("i, j, fe, ft",i, j, fe, ft)
+			#print("i, j, fe, ft",i, j, fe, ft)
 
 			for k in range(3):
 				idx1 = 3*i+k
@@ -1058,9 +1055,9 @@ def bld_AinvQP(imol, atype):
 						PFld[idx2][idx1] = element
 						PFld[idx4][idx3] = element
 
-	print("A")
-	print(A)
-	print()
+	#print("A")
+	#print(A)
+	#print()
 
 	###############################
 	# Section 3. Build matrix L2G #
@@ -1098,14 +1095,14 @@ def bld_AinvQP(imol, atype):
 							L2G[3*i+k][p_cnt] = xij[k]/rij
 						p_cnt += 1
 
-		print("PFld before")
-		print(PFld)
-		print()
-		print("L2G")
-		print(L2G)
-	print()
-	print("QFld before")
-	print(QFld)
+		#print("PFld before")
+		#print(PFld)
+		#print()
+		#print("L2G")
+		#print(L2G)
+	#print()
+	#print("QFld before")
+	#print(QFld)
 
 	############################################################
 	# Section 4. Modify QFld and PFld based on exc12 and exc13 #
@@ -1125,9 +1122,9 @@ def bld_AinvQP(imol, atype):
 							for m in range(3):
 								idx2 = 3*j+m
 								PFld[idx1][idx2] = 0.0
-	print()	
-	print("QFld after12",QFld)
-	print("PFld after12",PFld)
+	#print()	
+	#print("QFld after12",QFld)
+	#print("PFld after12",PFld)
 
 	if exc13 == 1:
 		for i in range(natm):
@@ -1144,16 +1141,16 @@ def bld_AinvQP(imol, atype):
 							for m in range(3):
 								idx2 = 3*j+m
 								PFld[idx1][idx2] = 0.0
-	print()
-	print("QFld after13",QFld)
-	print("PFld after13",PFld)
+	#print()
+	#print("QFld after13",QFld)
+	#print("PFld after13",PFld)
 
 	#####################################################
 	# Section 5. Finalize by building AinvQ (and AinvP) #
 	#####################################################
 	Ainv = np.linalg.inv(A)
-	print()
-	print("Ainv",Ainv)
+	#print()
+	#print("Ainv",Ainv)
 
 	AinvQ = np.matmul(Ainv, QFld)
 	if ipermdip > 0:
@@ -1251,7 +1248,6 @@ def init_q0_p0():
 				line = qin_file.readline().split()
 
 			while line:
-				print(line)
 				q0[q0_idx] = float(line[3])
 				q0_idx += 1
 				line = qin_file.readline().split()
@@ -1262,7 +1258,6 @@ def init_q0_p0():
 					line = qin_file.readline().split()
 
 				while line:
-					print(line)
 					p0[p0_idx] = float(line[4])
 					p0_idx += 1
 					line = qin_file.readline().split()
@@ -1274,10 +1269,6 @@ def init_q0_p0():
 					line = qin_file.readline()
 
 		qin_file.close()
-		print("q0_idx = ", q0_idx)
-		print("p0_idx = ", p0_idx)
-		print("q0: ",q0)
-		print("p0: ",p0)
 	else:
 		# Set initial charges (and permanent dipoles) to 0
 		q0.fill(0.0)
@@ -1324,7 +1315,7 @@ def data_prep():
 
 			if iqpcntr[i] > nqp:
 				output_file.write("\n Error: data_prep() charge equivalence input is screwy")
-				sys.end()
+				sys.exit()
 		else:
 			iqpcntr[i] = -1
 
@@ -1345,7 +1336,7 @@ def data_prep():
 
 				if iqpcntr[iuniq+i] > nqp:
 					output_file.write("\n Error: data_prep() permanent dipole equivalence input is screwy")
-					sys.end()
+					sys.exit()
 			else:
 				iqpcntr[iuniq+i] = -1
 
@@ -1361,9 +1352,6 @@ def data_prep():
 	# Set nqpl to the total # of row elements (charges/permanent dipoles to be independantly fit + constraints)
 	# in the fitting matrix
 	nqpl = nqp + nlgrng
-	print("iqpcntr",iqpcntr)
-	print("nqp",nqp)
-	print("nlgrng",nlgrng)
 
 def charge_opt():
 	#########################################################################
@@ -1417,7 +1405,6 @@ def charge_opt():
 		print(awork)
 		print("bwork after", nitern)
 		print(bwork)
-		print("irstrnt after",irstrnt)
 	
 		# -- copy solution vector "bwork" to 'calculated charges' vector qcal and pcal
 		for k in range(iuniq):
@@ -1567,16 +1554,10 @@ def rstran():
 	#
 	# called from matbld()
 	##########################################################################################################
-	global irstrnt, qwtval
-	qwtval = np.ndarray((iuniq))
+	global irstrnt
 	qwtval.fill(qwt)
-	print("qwtval before ",qwtval)
-
 	if ipermdip > 0:
-		global pwtval
-		pwtval = np.ndarray((iuniq_p))
 		pwtval.fill(pwt)
-		print("pwtval before ",pwtval)
 
 	for i in range(iuniq):
 		if ihfree > 0 and izan[i] == 1:
@@ -1604,9 +1585,6 @@ def rstran():
 		elif irstrnt > 0 and pwtval[i] > 0.1E-10:
 			pwtval[i] = pwt/math.sqrt(pcal[i]*pcal[i] + 0.01) # pcal has the current (calculated) dipole
 			a[i_idx][i_idx] += pwtval[i]
-
-	print("qwtval after ",qwtval)
-	print("pwtval after ",pwtval)
 
 	# If all qwtval[i] and pwtval[i] are 0.0, no restraints so reset irstrnt= -1
 	for i in range(iuniq):
@@ -1793,22 +1771,9 @@ def momin(wt, imol):
 	ain[1][0] = ain[0][1]
 	ain[2][0] = ain[0][2]
 	ain[2][1] = ain[1][2]
-	print("ain before diagm",ain)
 
 	#  ----- CALCULATE PRINCIPAL AXES OF MOMENT OF INERTIA -----
 	eigvals, s = np.linalg.eigh(ain)
-	#print("eigvals after diagm",eigvals)
-	#print("s before sort",s)
-#
-	#for i in range(2):
-	#	for j in range(i+1,3):
-	#		if eigvals[i] > eigvals[j]:
-	#			eigvals[i], eigvals[j] = eigvals[j], eigvals[i]
-	#			for k in range(3):
-	#				s[k][i], s[k][j] = s[k][j], s[k][i]
-
-	print("eigvals after sort",eigvals)
-	print("s after sort",s)
 	return s
 
 def mominrot(s, vecin, vecout, imol):
@@ -1838,12 +1803,13 @@ def mominrot(s, vecin, vecout, imol):
 			vecout[1][i] = ys
 			vecout[2][i] = zs
 
-def calc_quad(quad, coord, dip):
+def calc_quad(coord, dip):
 	############################################################################################
 	# This function calculates the molecular quadrupole moments (before or after reorientation).
 	#
 	# called from Main
 	############################################################################################
+	quad = np.zeros((6,nmol))
 	for imol in range(nmol):
 		for i in range(ibeg[imol], iend[imol]+1):
 			# Calculates quadrupole contributed by permanent charge
@@ -1873,6 +1839,7 @@ def calc_quad(quad, coord, dip):
 
 	# Convert quadrupoles from a.u. to debye*angstroms
 	quad *= au2D*au2A
+	return quad
 
 def wrt_qout():
 	########################################################################################
@@ -1999,7 +1966,6 @@ def evlchi():
 	rmse = math.sqrt(chipot/tot_nesp)
 	rrmse = math.sqrt(chipot/ssvpot)
 
-	print("chipot: ",chipot)
 	return chipot, rmse, rrmse
 
 def wrt_out():
@@ -2062,30 +2028,44 @@ def wrt_out():
 	output_file.write("\n\n ---------------------------")
 	output_file.write("\n Molecular Multipole Summary")
 	output_file.write("\n ---------------------------")
-	output_file.write("\n Center of Mass (Angst.):")
-	for imol in range(nmol):
-		output_file.write("\n #MOL          X          Y          Z")
-		output_file.write("\n %3d     %10.5f %10.5f %10.5f"%(imol+1,cmas_mol[0][imol], cmas_mol[1][imol], cmas_mol[2][imol]))
-	output_file.write("\n\n Dipole (Debye):")
-	for imol in range(nmol):
-		output_file.write("\n #MOL         D          Dx         Dy         Dz")
-		output_file.write("\n %3d     %10.5f %10.5f %10.5f %10.5f"%(imol+1,dipmom_mol[imol],dipol_mol[0][imol],dipol_mol[1][imol],dipol_mol[2][imol]))
-	output_file.write("\n\n Quadrupole (Debye*Angst.):")
-	for imol in range(nmol):
-		output_file.write("\n #MOL          X          Y          Z")
-		output_file.write("\n %3d    X %10.5f"%(imol+1,quad_mol[0][imol]))
-		output_file.write("\n        Y %10.5f %10.5f"%(quad_mol[3][imol],quad_mol[1][imol]))
-		output_file.write("\n        Z %10.5f %10.5f %10.5f"%(quad_mol[4][imol], quad_mol[5][imol], quad_mol[2][imol]))
-	output_file.write("\n\n Dipole Reoriented (Debye):")
-	for imol in range(nmol):
-		output_file.write("\n #MOL         D          Dx         Dy         Dz")
-		output_file.write("\n %3d     %10.5f %10.5f %10.5f %10.5f"%(imol+1,dipmom_mol[imol],dipol_mol_com[0][imol],dipol_mol_com[1][imol],dipol_mol_com[2][imol]))
-	output_file.write("\n\n Quadrupole Reoriented (Debye*Angst.):")
-	for imol in range(nmol):
-		output_file.write("\n #MOL          X          Y          Z")
-		output_file.write("\n %3d    X %10.5f"%(imol+1,quad_mol_com[0][imol]))
-		output_file.write("\n        Y %10.5f %10.5f"%(quad_mol_com[3][imol],quad_mol_com[1][imol]))
-		output_file.write("\n        Z %10.5f %10.5f %10.5f"%(quad_mol_com[4][imol], quad_mol_com[5][imol], quad_mol_com[2][imol]))
+	if ireornt > 0:
+		output_file.write("\n Center of Mass (Angst.):")
+		for imol in range(nmol):
+			output_file.write("\n #MOL          X          Y          Z")
+			output_file.write("\n %3d     %10.5f %10.5f %10.5f"%(imol+1,cmas_mol[0][imol], cmas_mol[1][imol], cmas_mol[2][imol]))
+		output_file.write("\n\n Dipole Reoriented (Debye):")
+		for imol in range(nmol):
+			output_file.write("\n #MOL         D          Dx         Dy         Dz")
+			output_file.write("\n %3d     %10.5f %10.5f %10.5f %10.5f"%(imol+1,dipmom_mol[imol],dipol_mol_com[0][imol],dipol_mol_com[1][imol],dipol_mol_com[2][imol]))
+		output_file.write("\n\n Quadrupole Reoriented (Debye*Angst.):")
+		for imol in range(nmol):
+			output_file.write("\n #MOL          X          Y          Z")
+			output_file.write("\n %3d    X %10.5f"%(imol+1,quad_mol_com[0][imol]))
+			output_file.write("\n        Y %10.5f %10.5f"%(quad_mol_com[3][imol],quad_mol_com[1][imol]))
+			output_file.write("\n        Z %10.5f %10.5f %10.5f"%(quad_mol_com[4][imol], quad_mol_com[5][imol], quad_mol_com[2][imol]))
+		output_file.write("\n\n Quadrupole Reoriented, Gaussian Scale (Debye*Angst.):")
+		for imol in range(nmol):
+			output_file.write("\n #MOL          X          Y          Z")
+			output_file.write("\n %3d    X %10.5f"%(imol+1,quad_mol_com[0][imol]/3))
+			output_file.write("\n        Y %10.5f %10.5f"%(quad_mol_com[3][imol]/3,quad_mol_com[1][imol]/3))
+			output_file.write("\n        Z %10.5f %10.5f %10.5f"%(quad_mol_com[4][imol]/3, quad_mol_com[5][imol]/3, quad_mol_com[2][imol]/3))
+	else:
+		output_file.write("\n Dipole (Debye):")
+		for imol in range(nmol):
+			output_file.write("\n #MOL         D          Dx         Dy         Dz")
+			output_file.write("\n %3d     %10.5f %10.5f %10.5f %10.5f"%(imol+1,dipmom_mol[imol],dipol_mol[0][imol],dipol_mol[1][imol],dipol_mol[2][imol]))
+		output_file.write("\n\n Quadrupole (Debye*Angst.):")
+		for imol in range(nmol):
+			output_file.write("\n #MOL          X          Y          Z")
+			output_file.write("\n %3d    X %10.5f"%(imol+1,quad_mol[0][imol]))
+			output_file.write("\n        Y %10.5f %10.5f"%(quad_mol[3][imol],quad_mol[1][imol]))
+			output_file.write("\n        Z %10.5f %10.5f %10.5f"%(quad_mol[4][imol], quad_mol[5][imol], quad_mol[2][imol]))
+		output_file.write("\n\n Quadrupole, Gaussian Scale (Debye*Angst.):")
+		for imol in range(nmol):
+			output_file.write("\n #MOL          X          Y          Z")
+			output_file.write("\n %3d    X %10.5f"%(imol+1,quad_mol[0][imol]/3))
+			output_file.write("\n        Y %10.5f %10.5f"%(quad_mol[3][imol]/3,quad_mol[1][imol]/3))
+			output_file.write("\n        Z %10.5f %10.5f %10.5f"%(quad_mol[4][imol]/3, quad_mol[5][imol]/3, quad_mol[2][imol]/3))
 
 #-----------------------------------------------------------------------
 # The beginning of the main program
@@ -2122,11 +2102,13 @@ init_q0_p0()
 data_prep()
 
 qcal = np.zeros((iuniq))
+qwtval = np.zeros((iuniq))
 if ipermdip > 0:
 	pcal = np.zeros((iuniq_p))
+	pwtval = np.zeros((iuniq_p))
 
 if irstrnt == 2:
-	# If irstrnt= 2 then we just want to compare esp's to q0's
+	# If irstrnt= 2 then we just want to calculate esp's of q0's
 	for k in range(iuniq):
 		qcal[k] = q0[k]
 	qwt = 0.0
@@ -2142,14 +2124,13 @@ else:
 ###### Calculate dipole moments ######
 calc_dip()
 
-###### Center & reorient molecule in preparation for dipole & quadrupole ######
-reornt()
-
-###### Calculate quadrupole moments ######
-quad_mol = np.zeros((6,nmol))
-quad_mol_com = np.zeros((6,nmol))
-calc_quad(quad_mol, crd, dipindperm)
-calc_quad(quad_mol_com, co, dipindperm_com)
+###### Center & reorient molecule/dipole and calculate quadrupole moments ######
+if ireornt > 0:
+	reornt()
+	quad_mol_com = calc_quad(co, dipindperm_com)
+else:
+	np.zeros((6,nmol))
+	quad_mol = calc_quad(crd, dipindperm)
 
 ###### Write charges & permanent dipoles ######
 wrt_qout()
