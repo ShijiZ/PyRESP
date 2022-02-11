@@ -22,14 +22,14 @@ Input,output,qin,qout,espot,esout,polariz = [None]*7
 input_file,output_file,qin_file,qout_file,espot_file,esout_file,polariz_file = [None]*7
 
 ###### infoa ######
-iuniq,iuniq_p,nqpl,ihfree,irstrnt,ireornt = 0,0,0,1,1,0
+iuniq,iuniq_p,nqpl,ihfree,irstrnt,ireornt,iquad = 0,0,0,1,1,0,1
 
 ###### runlab ######
 title = None
 
 ###### espcom ######
 a_pot,b_pot = [None]*2
-ssvpot,tot_nesp = 0.0,0
+ssvpot_list,tot_nesp = None,0
 
 ###### calcul ###### 
 qcal,a,b,qwtval,pwtval,iqpcntr = [None]*6
@@ -83,7 +83,7 @@ def read_in():
  	#
  	# called from Main
  	#############################################
-	global nmol,iqopt,ihfree,irstrnt,qwt,ioutopt,ireornt
+	global nmol,iqopt,ihfree,irstrnt,qwt,ioutopt,ireornt,iquad
 	global ipol,igdm,exc12,exc13,ipermdip,pwt,virtual
 
 	output_file.write('\n -----------------------------------------------')
@@ -106,6 +106,7 @@ def read_in():
 		qwt = cntrl_nml['qwt'] if 'qwt' in cntrl_nml else 0.0005
 		ioutopt = cntrl_nml['ioutopt'] if 'ioutopt' in cntrl_nml else 0
 		ireornt = cntrl_nml['ireornt'] if 'ireornt' in cntrl_nml else 0
+		iquad = cntrl_nml['iquad'] if 'iquad' in cntrl_nml else 1
 
 		# With dipole
 		ipol = cntrl_nml['ipol'] if 'ipol' in cntrl_nml else 5
@@ -124,7 +125,7 @@ def read_in():
 	output_file.write('\n nmol        = %d   iqopt       = %d'%(nmol, iqopt))
 	output_file.write('\n ihfree      = %d   irstrnt     = %d'%(ihfree, irstrnt))
 	output_file.write('\n ioutopt     = %d   ireornt     = %d'%(ioutopt, ireornt))
-	output_file.write('\n qwt         = %.8f'%(qwt))
+	output_file.write('\n iquad       = %d   qwt         = %.8f'%(iquad, qwt))
 	if ipol > 0:
 		output_file.write('\n ipol        = %d   igdm        = %d'%(ipol, igdm))
 		output_file.write('\n exc12       = %d   exc13       = %d'%(exc12, exc13))
@@ -717,7 +718,7 @@ def matpot():
 	#
 	# called from Main
 	#####################################################################################################
-	global a_pot, b_pot, crd, mat_pot, ssvpot, tot_nesp
+	global a_pot, b_pot, crd, mat_pot, ssvpot_list, tot_nesp
 	if ipol > 0:
 		global n12_list, dict12_list, n13_list, dict13_list, AinvQ_list
 		if ipermdip > 0:
@@ -730,6 +731,7 @@ def matpot():
 	b_pot = np.zeros((iuniq+iuniq_p))
 	crd = np.zeros((3,iuniq))
 	mat_pot = np.ndarray((0, iuniq+iuniq_p))
+	ssvpot_list = np.zeros((nmol))
 
 	if ipol > 0:
 		n12_list, dict12_list = [], []
@@ -835,7 +837,7 @@ def matpot():
 				output_file.write("\n Error: premature end of potential file")
 				sys.exit()
 			espi, xi, yi, zi = float(line[0]),float(line[1]),float(line[2]),float(line[3])
-			ssvpot += wt2*espi*espi
+			ssvpot_list[imol] += wt2*espi*espi
 
 			# Calculate the distance between esp point i and atom j
 			for j in range(ibeg[imol], iend[imol]+1):
@@ -1230,43 +1232,43 @@ def init_q0_p0():
 		# Replace initial charges q0 and permanent dipoles p0 from qin if iqopt>1
 		qin_file = open(qin, 'r')
 		if ipermdip > 0:
-			output_file.write("\n Since iqopt>1, %4d new q0 values and %4d "%(iuniq, iuniq_p))
-			output_file.write("\n new p0 values will be read from file %s\n"%qin)
+			output_file.write("\n Since iqopt>1, %4d new q0 values and %4d new p0 values will be"%(iuniq, iuniq_p))
+			output_file.write("\n read from file %s\n"%qin)
 		else:
-			output_file.write("\n Since iqopt>1, %4d new q0 values will "%iuniq)
-			output_file.write("\n be read from file %s\n"%qin)
+			output_file.write("\n Since iqopt>1, %4d new q0 values will be read from file"%iuniq)
+			output_file.write("\n %s\n"%qin)
 
 		q0_idx = 0
 		if ipermdip > 0:
 			p0_idx = 0
 
-		# Read in replacement charges
+		line = qin_file.readline().split() # skip 1st line
 		for imol in range(nmol):
 			natm = iend[imol]-ibeg[imol]+1
 
-			for i in range(natm+10):
-				line = qin_file.readline().split()
+			for i in range(natm+9):
+				line = qin_file.readline().split() # skip ATOM CRD
 
 			while line:
 				q0[q0_idx] = float(line[3])
 				q0_idx += 1
-				line = qin_file.readline().split()
+				line = qin_file.readline().split() # Read in replacement charges
 
-			# Read in replacement permanent dipoles
-			if ipermdip > 0:
-				for i in range(3):
-					line = qin_file.readline().split()
-
-				while line:
-					p0[p0_idx] = float(line[4])
-					p0_idx += 1
-					line = qin_file.readline().split()
-
-				for i in range(2*natm+5):
-					line = qin_file.readline()
-			else:
-				for i in range(natm+2):
-					line = qin_file.readline()
+			if ipol > 0:
+				if ipermdip > 0:
+					for i in range(3):
+						line = qin_file.readline().split()
+	
+					while line:
+						p0[p0_idx] = float(line[4])
+						p0_idx += 1
+						line = qin_file.readline().split() # Read in replacement permanent dipoles
+	
+					for i in range(2*natm+6):
+						line = qin_file.readline() # skip PERM DIP GLOBAL and IND DIP GLOBAL
+				else:
+					for i in range(natm+3):
+						line = qin_file.readline() # skip IND DIP GLOBAL
 
 		qin_file.close()
 	else:
@@ -1323,7 +1325,7 @@ def data_prep():
 		output_file.write("\n Warning: ALL charges are frozen!!!")
 	else:
 		output_file.write("\n Number of unique UNfrozen charge centers = %5d"%nqp)
-		nq = nqp
+	nq = nqp
 
 	# Fill in permanent dipole equivalence information in iqpcntr
 	if ipermdip > 0:
@@ -1957,16 +1959,53 @@ def evlchi():
 
 		if ioutopt == 1:
 			rmse_mol = math.sqrt(chipot_mol/nesp)
-			esout_file.write("molecule {:d}  rss: {:13.7E}  rmse: {:13.7E}\n\n".format(imol+1,chipot_mol,rmse_mol))
+			rrmse_mol = math.sqrt(chipot_mol/ssvpot_list[imol])
+			esout_file.write("molecule {:d}  rss={:13.7E} rmse={:13.7E} rrmse={:13.7E}\n\n".format(imol+1,chipot_mol,rmse_mol,rrmse_mol))
 
 	espot_file.close()
 	if ioutopt == 1:
 		esout_file.close()
 
 	rmse = math.sqrt(chipot/tot_nesp)
-	rrmse = math.sqrt(chipot/ssvpot)
+	rrmse = math.sqrt(chipot/sum(ssvpot_list))
 
 	return chipot, rmse, rrmse
+
+def wrt_quad(quad_mol, prncpl):
+	if prncpl:
+		for imol in range(nmol):
+			quad_orig = np.ndarray((3,3))
+			quad_orig[0][0] = quad_mol[0][imol]
+			quad_orig[0][1] = quad_mol[3][imol]
+			quad_orig[0][2] = quad_mol[4][imol]
+			quad_orig[1][0] = quad_mol[3][imol]
+			quad_orig[1][1] = quad_mol[1][imol]
+			quad_orig[1][2] = quad_mol[5][imol]
+			quad_orig[2][0] = quad_mol[4][imol]
+			quad_orig[2][1] = quad_mol[5][imol]
+			quad_orig[2][2] = quad_mol[2][imol]
+			quad_diag, s = np.linalg.eigh(quad_orig)
+			quad_diag = sorted(quad_diag, reverse=True)
+			output_file.write("\n #MOL          X          Y          Z")
+			if iquad == 0:
+				output_file.write("\n %3d    X %10.5f"%(imol+1, quad_diag[0]))
+				output_file.write("\n        Y %10.5f %10.5f"%(0.0, quad_diag[1]))
+				output_file.write("\n        Z %10.5f %10.5f %10.5f"%(0.0, 0.0, quad_diag[2]))
+			else:
+				output_file.write("\n %3d    X %10.5f"%(imol+1, quad_diag[0]/3))
+				output_file.write("\n        Y %10.5f %10.5f"%(0.0, quad_diag[1]/3))
+				output_file.write("\n        Z %10.5f %10.5f %10.5f"%(0.0, 0.0, quad_diag[2]/3))
+	else:
+		for imol in range(nmol):
+			output_file.write("\n #MOL          X          Y          Z")
+			if iquad == 0:
+				output_file.write("\n %3d    X %10.5f"%(imol+1,quad_mol[0][imol]))
+				output_file.write("\n        Y %10.5f %10.5f"%(quad_mol[3][imol],quad_mol[1][imol]))
+				output_file.write("\n        Z %10.5f %10.5f %10.5f"%(quad_mol[4][imol], quad_mol[5][imol], quad_mol[2][imol]))
+			else:
+				output_file.write("\n %3d    X %10.5f"%(imol+1,quad_mol[0][imol]/3))
+				output_file.write("\n        Y %10.5f %10.5f"%(quad_mol[3][imol]/3,quad_mol[1][imol]/3))
+				output_file.write("\n        Z %10.5f %10.5f %10.5f"%(quad_mol[4][imol]/3, quad_mol[5][imol]/3, quad_mol[2][imol]/3))
 
 def wrt_out():
 	########################################################################################
@@ -2019,7 +2058,7 @@ def wrt_out():
 	output_file.write("\n --------------------------")
 	output_file.write("\n Fitting Statistics Summary")
 	output_file.write("\n --------------------------")
-	output_file.write("\n The initial sum of squares  (ssvpot = sum_i(espi**2))          {:13.7E}".format(ssvpot))
+	output_file.write("\n The initial sum of squares  (ssvpot = sum_i(espi**2))          {:13.7E}".format(sum(ssvpot_list)))
 	output_file.write("\n The residual sum of squares (RSS = sum_i((espi-espclci)**2))   {:13.7E}".format(chipot))
 	output_file.write("\n The root-mean-squared error (RMSE = sqrt(RSS/N))               {:13.7E}".format(rmse))
 	output_file.write("\n The relative RMSE           (RRMSE = sqrt(RSS/ssvpot))         {:13.7E}".format(rrmse))
@@ -2033,39 +2072,23 @@ def wrt_out():
 		for imol in range(nmol):
 			output_file.write("\n #MOL          X          Y          Z")
 			output_file.write("\n %3d     %10.5f %10.5f %10.5f"%(imol+1,cmas_mol[0][imol], cmas_mol[1][imol], cmas_mol[2][imol]))
-		output_file.write("\n\n Dipole Reoriented (Debye):")
+		output_file.write("\n\n Dipole Moments Reoriented (Debye):")
 		for imol in range(nmol):
 			output_file.write("\n #MOL         D          Dx         Dy         Dz")
 			output_file.write("\n %3d     %10.5f %10.5f %10.5f %10.5f"%(imol+1,dipmom_mol[imol],dipol_mol_com[0][imol],dipol_mol_com[1][imol],dipol_mol_com[2][imol]))
-		output_file.write("\n\n Quadrupole Reoriented (Debye*Angst.):")
-		for imol in range(nmol):
-			output_file.write("\n #MOL          X          Y          Z")
-			output_file.write("\n %3d    X %10.5f"%(imol+1,quad_mol_com[0][imol]))
-			output_file.write("\n        Y %10.5f %10.5f"%(quad_mol_com[3][imol],quad_mol_com[1][imol]))
-			output_file.write("\n        Z %10.5f %10.5f %10.5f"%(quad_mol_com[4][imol], quad_mol_com[5][imol], quad_mol_com[2][imol]))
-		output_file.write("\n\n Quadrupole Reoriented, Gaussian Scale (Debye*Angst.):")
-		for imol in range(nmol):
-			output_file.write("\n #MOL          X          Y          Z")
-			output_file.write("\n %3d    X %10.5f"%(imol+1,quad_mol_com[0][imol]/3))
-			output_file.write("\n        Y %10.5f %10.5f"%(quad_mol_com[3][imol]/3,quad_mol_com[1][imol]/3))
-			output_file.write("\n        Z %10.5f %10.5f %10.5f"%(quad_mol_com[4][imol]/3, quad_mol_com[5][imol]/3, quad_mol_com[2][imol]/3))
+		output_file.write("\n\n Traceless Quadrupole Moments Reoriented (Debye*Angst.):")
+		wrt_quad(quad_mol_com, False)
+		output_file.write("\n\n Traceless Quadrupole Moments in Principal Axes (Debye*Angst.):")
+		wrt_quad(quad_mol_com, True)
 	else:
-		output_file.write("\n Dipole (Debye):")
+		output_file.write("\n Dipole Moments (Debye):")
 		for imol in range(nmol):
 			output_file.write("\n #MOL         D          Dx         Dy         Dz")
 			output_file.write("\n %3d     %10.5f %10.5f %10.5f %10.5f"%(imol+1,dipmom_mol[imol],dipol_mol[0][imol],dipol_mol[1][imol],dipol_mol[2][imol]))
-		output_file.write("\n\n Quadrupole (Debye*Angst.):")
-		for imol in range(nmol):
-			output_file.write("\n #MOL          X          Y          Z")
-			output_file.write("\n %3d    X %10.5f"%(imol+1,quad_mol[0][imol]))
-			output_file.write("\n        Y %10.5f %10.5f"%(quad_mol[3][imol],quad_mol[1][imol]))
-			output_file.write("\n        Z %10.5f %10.5f %10.5f"%(quad_mol[4][imol], quad_mol[5][imol], quad_mol[2][imol]))
-		output_file.write("\n\n Quadrupole, Gaussian Scale (Debye*Angst.):")
-		for imol in range(nmol):
-			output_file.write("\n #MOL          X          Y          Z")
-			output_file.write("\n %3d    X %10.5f"%(imol+1,quad_mol[0][imol]/3))
-			output_file.write("\n        Y %10.5f %10.5f"%(quad_mol[3][imol]/3,quad_mol[1][imol]/3))
-			output_file.write("\n        Z %10.5f %10.5f %10.5f"%(quad_mol[4][imol]/3, quad_mol[5][imol]/3, quad_mol[2][imol]/3))
+		output_file.write("\n\n Traceless Quadrupole Moments (Debye*Angst.):")
+		wrt_quad(quad_mol, False)
+		output_file.write("\n\n Traceless Quadrupole Moments in Principal Axes (Debye*Angst.):")
+		wrt_quad(quad_mol, True)
 
 #-----------------------------------------------------------------------
 # The beginning of the main program
