@@ -1,5 +1,239 @@
 #!/usr/bin/env python3
 
+#-----------------------------------------------------------------------
+#    History Versions and Authors
+#-----------------------------------------------------------------------
+#
+#      PyRESP version 1.0     Feburary 2022 - Shiji Zhao
+#
+#      RESP   version 2.4     November 2013 - q4md-forcefieldtools.org
+#      RESP   version 2.2     January 2011 - q4md-forcefieldtools.org
+#      RESP   version 2.1     October 1994 - Jim Caldwell
+#      RESP   version 2.0     September 1992 - Christopher Bayly
+#
+#      ESPFIT version 1.0 (modified)  - Ian Gould
+#      ESPFIT version 1.0             - U.Chandra Singh and P.A.Kollman
+#
+#-----------------------------------------------------------------------
+#    Affiliations
+#-----------------------------------------------------------------------
+#
+#      Shiji Zhao:
+#                 Center for Complex Biological Systems
+#                 University of California, Irvine
+#                 Irvine, CA 92697-2280
+#
+#      All other authors:
+#                 Department of Pharmaceutical Chemistry
+#                 School of Pharmacy
+#                 University of California, San Francisco
+#                 San Francisco, CA 94143
+#
+#-----------------------------------------------------------------------
+#
+#    THIS PROGRAM FITS THE QUANTUM MECHANICALLY CALCULATED ELECTROSTATIC
+#    POTENTIAL AT MOLECULAR SURFACES USING ELECTROSTATIC MODELS WITH
+#    ATOM-CENTERED (1) PERMANENT CHARGES AND (2) INDUCED DIPOLES AND (3)
+#    PERMANENT DIPOLES. THE MOLECULAR SURFACES ARE GENERATED BEYOND VANDER
+#    WAAL SURFACE IN ORDER TO MINIMISE OTHER CONTRIBUTIONS SUCH AS 
+#    EXCHANGE REPULSION AND CHARGE TRANSFER
+#
+#---------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------
+#
+#    Unit -i (input) input of general information
+#
+#---------------------------------------------------------------------------------------------
+#
+#    -1st line-   TITLE          a character string
+#
+#---------------------------------------------------------------------------------------------
+#
+#    -2nd section-
+#
+#           OPTIONS FOR THE JOB begin with " &cntrl"
+#                               end with   " &end"
+#
+#		nmol     =  the number of structure(s) in a multiple structure fit (default 1)
+#                   structure(s): orientation(s), conformation(s) or molecule(s)
+#  
+#		iqopt    =  1  ... reset all initial charges (and permanent dipoles) to zero (default)
+#                =  2  ... read in new initial charges (and permanent dipoles) from -q unit
+#
+#		ihfree   =  0  ... all atoms are restrained
+#                =  1  ... hydrogens not restrained (default)
+#
+#		irstrnt  =  0  ... harmonic restraints (old style)
+#                =  1  ... hyperbolic restraint to charge of zero (default)
+#                =  2  ... only analysis of input charges; no charge fitting is carried out
+#                          
+#		qwt      =  restraint weight for charges; default is 0.0005
+#
+#		ioutopt  =  0  ... normal run
+#                =  1  ... write restart info of new esp to -s unit (default)
+#
+#		ireornt  =  0  ... normal run (default)
+#                =  1  ... reorient molecule to standard reorientation in Gaussian definition before 
+#                          calculating molecular dipole and quadrupole moments
+#
+#		iquad    =  0  ... report molecular quadrupole moment in Buckingham definition
+#                =  1  ... report molecular quadrupole moment in Gaussian definition (default)
+#
+#		ipol     =  0  ... additive RESP model; no atomic dipole calculations
+#                   1  ... Applequist scheme without damping
+#                   2  ... Tinker-exponential damping scheme
+#                   3  ... exponential damping scheme
+#                   4  ... linear damping scheme
+#                   5  ... pGM damping scheme(default)
+#               
+#		igdm     =  0  ... normal run
+#                =  1  ... use distributed pGM charges and dipoles in ESP fitting (default)
+#                          only use with ipol = 5
+#
+#		exc12    =  0  ... include 1-2 interactions for electric field calculations (default)
+#                =  1  ... exclude 1-2 interactions
+#
+#		exc13    =  0  ... include 1-3 interactions for electric field calculations (default)
+#                =  1  ... exclude 1-3 interactions
+#
+#		ipermdip =  0  ... RESP-ind model; do not calculate permanent dipole
+#                =  1  ... RESP-perm model; calculate permanent dipoles (default)
+#
+#		pwt      =  restraint weight for permanent dipoles; default is 0.0005
+#
+#		virtual  =  0  ... normal run (default)
+#                =  1  ... enable permanent dipoles for 1-3 virtual bonds
+#
+#---------------------------------------------------------------------------------------------
+#
+#     -3rd line- wtmol ... relative weight for the structure if multiple structure fit (1.0 otherwise) 
+#                    
+#---------------------------------------------------------------------------------------------
+#
+#     -4th line- subtitle for the structure (a character string)
+#
+#---------------------------------------------------------------------------------------------
+#
+#     -5th line- charge   iuniq   (iuniq_p)
+#        total charge value & total number of atoms & total number of permanent dipoles for the considered structure   
+#
+#---------------------------------------------------------------------------------------------
+#
+#     -6th area- one line for each atom
+#        element number = element number in periodic table
+#        ivary          = control charge variations of each center
+#        (ivary_p       = control permanent dipole variations of each center)
+#        ivary & ivary_p 
+#                       =  0 current charge fitted independently of other centers
+#                       = -1 current charge frozen at "initial stage" value typically read in from -q unit
+#                       =  n current charge fitted and equivalenced to that of center "n"
+#
+#---------------------------------------------------------------------------------------------
+#
+#     -7th area- intra-molecular charge constraint(s); blank line if no constriant
+#        ngrp = the number of charge centers in the group of atoms associated with this constraint
+#        grpchg = charge value to which the associated group of atoms (given on the next area) is to be constrained
+#
+#     -7.1th area-
+#        imol  iatom (repeat if more than 8 centers)
+#        the list ("ngrp" long) of the atoms to be constrained to the charge specified on the previous line.
+#
+#        blank to end
+#
+#---------------------------------------------------------------------------------------------
+#
+#     -8th area- inter-molecular charge constraint(s)
+#        same format as intra-molecular charge constraint(s) - see the 7th & 7.1th areas
+#
+#        blank to end
+#
+#---------------------------------------------------------------------------------------------
+#
+#     -9th area- multiple structure atom charge equivalencing
+#        ngrp = the number of charge enters in the group of atoms for equivalencing
+#
+#     -9.1th area-
+#        imol  iatom (repeat if more than 8 centers)
+#        the list ("ngrp" long) of the atoms to be equivalenced
+#
+#        blank to end
+#
+#---------------------------------------------------------------------------------------------
+#
+#     -10th area- multiple structure permanent dipole equivalencing
+#        ngrp = the number of permanent dipole centers for the group of permanent dipoles for equivalencing
+#
+#     -9.1th area-
+#        imol  idip (repeat if more than 8 centers)
+#        the list ("ngrp" long) of the permanent dipole to be equivalenced
+#
+#        blank to end
+#
+#---------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------
+#
+#    Unit -e (espot) input of ESP and coordinates
+#
+#---------------------------------------------------------------------------------------------
+#
+#     -1st line- natom   nesp (total number of atoms & ESP points)
+#
+#---------------------------------------------------------------------------------------------
+#
+#     -2nd line up to natom+1 line-
+#        atom coordinates X Y Z (in Bohrs) & element number & atom type
+#
+#---------------------------------------------------------------------------------------------
+#
+#     -natom+2 line up to natom+2+nesp line- ESP & coordinates
+#        espot X Y Y (in a.u. & Bohrs)
+#
+#---------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------
+#
+#    Unit -q (qin) input of replacement charges (and permanent dipoles) if requested
+#    (note same format as that produced by -t unit)
+#
+#---------------------------------------------------------------------------------------------
+#
+#     %FLAG TITLE: a character string
+#     subtitle for the structure 
+#
+#---------------------------------------------------------------------------------------------
+#
+#     %FLAG ATOM CRD: I4,3E16.7
+#     atm.no: atom number 
+#     X, Y, Z: atom coordinates X Y Z 
+#
+#---------------------------------------------------------------------------------------------
+#
+#     %FLAG ATOM CHRG: 2(I4,X7),I4,X2,E16.7
+#     atm,no: atom number
+#     element.no: element number in periodic table
+#     ivary: charge variations
+#     q(opt): optimized atomic charge
+#
+#---------------------------------------------------------------------------------------------
+#
+#     %FLAG PERM DIP LOCAL: 3(I4,X5),I4,X2,E16.7 (for ipermdip = 1)
+#     dip.no: dipole number
+#     atm.no: atom number
+#     ref.no: reference atom number
+#     ivary: permanent dipole variations
+#     p(opt): optimized permanent dipole in local frame 
+#
+#---------------------------------------------------------------------------------------------
+#
+#     %FLAG PERM DIP GLOBAL: I4,3E16.7 (for ipermdip = 1)
+#     atm.no: atom number 
+#     X, Y, Z: optimized permanent dipole in X Y Z directions of global frame
+#
+#---------------------------------------------------------------------------------------------
+#
+#     %FLAG IND DIP GLOBAL: I4,3E16.7 (for ipol > 0)
+#     atm.no: atom number 
+#     X, Y, Z: induced dipole in X Y Z directions of global frame
+#
 import argparse as ap
 import numpy as np
 import sys
@@ -64,11 +298,11 @@ def file_in():
 	parser = ap.ArgumentParser(usage='py_resp.py [-O] -i input -o output [-q qin] [-ip polariz] -t qout -e espot -s esout')
 	parser.add_argument("-O", action='store_true', help="Overwrite output files if they exist")
 	parser.add_argument("-i", "--input", required=True, help="type: input, required; description: input options")
-	parser.add_argument("-e", "--espot", required=True, help="type: input, required; description: input of MEP and coordinates")
+	parser.add_argument("-e", "--espot", required=True, help="type: input, required; description: input of ESP and coordinates")
 	parser.add_argument("-q", "--qin", help="type: input, optional; description: replacement charges")
 	parser.add_argument("-o", "--output", required=True, help="type: output, always produced; description: output of results")
 	parser.add_argument("-t", "--qout", required=True, help="type: output, always produced; description: output of current charges")
-	parser.add_argument("-s", "--esout", help="type: output, optional; description: generated MEP values for new charges")
+	parser.add_argument("-s", "--esout", help="type: output, optional; description: generated ESP values for new charges")
 	parser.add_argument("-ip", "--polariz", help="type: input, optional; description: atomic polarizabilities")
 	
 	args = parser.parse_args()
@@ -87,7 +321,7 @@ def read_in():
 	global ipol,igdm,exc12,exc13,ipermdip,pwt,virtual
 
 	output_file.write('\n -----------------------------------------------')
-	output_file.write('\n              Py_RESP Beta Version')
+	output_file.write('\n              Py_RESP Version 1.0')
 	output_file.write('\n -----------------------------------------------')
 	output_file.write('\n '+input_file.readline())
 	output_file.write(' -----------------------------------------------\n')
@@ -795,12 +1029,6 @@ def matpot():
 			n13_list.append(n13)
 			dict13_list.append(dict13)
 
-			print()
-			print("n12_list, dict12_list")
-			print(n12_list, dict12_list)
-			print("n13_list, dict13_list")
-			print(n13_list, dict13_list)
-
 			# Considering permanent dipole, we need to build AinvQ, AinvP, L2G; without permanent dipole
 			# we only need to build AinvQ. See bld_AinvQP() for the meaning of each matrix.
 			if ipermdip > 0:
@@ -809,9 +1037,6 @@ def matpot():
 
 				AinvQ, AinvP, L2G = bld_AinvQP(imol, atype)
 				AinvP_I = AinvP + np.identity(3*natm)
-				#print()
-				#print("AinvP_I")
-				#print(AinvP_I)
 
 				AinvP_L2G_list.append(np.matmul(AinvP,L2G))
 				L2G_list.append(L2G)
@@ -819,10 +1044,6 @@ def matpot():
 				AinvQ = bld_AinvQP(imol, atype)
 
 			AinvQ_list.append(AinvQ)
-			#print()
-			#print("AinvQ",AinvQ)
-			#print()
-			#print("AinvP",AinvP)
 
 		#############################################
 		# Section 2.4. build a_pot, b_pot and mat_pot #
@@ -854,7 +1075,6 @@ def matpot():
 				if ipol == 5 and igdm > 0:
 					polj, radj = pol_dict[atype[j_idx]][0], pol_dict[atype[j_idx]][1]
 					fe, ft, f0 = damp_facts(rij, 1, polj, 0, radj)
-					#print("i, j, fe, ft, f0",i, j, fe, ft, f0)
 					rij /= f0
 					rij3 /= fe
 
@@ -948,14 +1168,6 @@ def matpot():
 	for j in range(iuniq+iuniq_p-1):
 		for k in range(j+1, iuniq+iuniq_p):
 			a_pot[k][j] = a_pot[j][k]
-	#print()
-	#print("mat_pot")
-	#print(mat_pot)
-	#print()
-	#print("a_pot")
-	#print(a_pot)
-	#print("b_pot")
-	#print(b_pot)
 
 	espot_file.close()
 
@@ -1015,7 +1227,6 @@ def bld_AinvQP(imol, atype):
 			poli, polj = pol_dict[atype[i]][0], pol_dict[atype[j]][0]
 			radi, radj = pol_dict[atype[i]][1], pol_dict[atype[j]][1]
 			fe, ft, f0 = damp_facts(rij, poli, polj, radi, radj)
-			#print("i, j, fe, ft",i, j, fe, ft)
 
 			for k in range(3):
 				idx1 = 3*i+k
@@ -1057,10 +1268,6 @@ def bld_AinvQP(imol, atype):
 						PFld[idx2][idx1] = element
 						PFld[idx4][idx3] = element
 
-	#print("A")
-	#print(A)
-	#print()
-
 	###############################
 	# Section 3. Build matrix L2G #
 	###############################
@@ -1097,15 +1304,6 @@ def bld_AinvQP(imol, atype):
 							L2G[3*i+k][p_cnt] = xij[k]/rij
 						p_cnt += 1
 
-		#print("PFld before")
-		#print(PFld)
-		#print()
-		#print("L2G")
-		#print(L2G)
-	#print()
-	#print("QFld before")
-	#print(QFld)
-
 	############################################################
 	# Section 4. Modify QFld and PFld based on exc12 and exc13 #
 	############################################################
@@ -1124,9 +1322,6 @@ def bld_AinvQP(imol, atype):
 							for m in range(3):
 								idx2 = 3*j+m
 								PFld[idx1][idx2] = 0.0
-	#print()	
-	#print("QFld after12",QFld)
-	#print("PFld after12",PFld)
 
 	if exc13 == 1:
 		for i in range(natm):
@@ -1143,16 +1338,11 @@ def bld_AinvQP(imol, atype):
 							for m in range(3):
 								idx2 = 3*j+m
 								PFld[idx1][idx2] = 0.0
-	#print()
-	#print("QFld after13",QFld)
-	#print("PFld after13",PFld)
 
 	#####################################################
 	# Section 5. Finalize by building AinvQ (and AinvP) #
 	#####################################################
 	Ainv = np.linalg.inv(A)
-	#print()
-	#print("Ainv",Ainv)
 
 	AinvQ = np.matmul(Ainv, QFld)
 	if ipermdip > 0:
@@ -1392,21 +1582,9 @@ def charge_opt():
 		for jn in range(nqpl):
 			if abs(awork[jn][jn]) < 1.0E-10:
 				awork[jn][jn] = 1.0E-10
-
-		print()
-		print("awork before", nitern)
-		print(awork)
-		print("bwork before", nitern)
-		print(bwork)
 	
 		awork, piv = lu_factor(awork, overwrite_a=True)
 		bwork = lu_solve((awork, piv), bwork, overwrite_b=True)
-
-		print()
-		print("awork after", nitern)
-		print(awork)
-		print("bwork after", nitern)
-		print(bwork)
 	
 		# -- copy solution vector "bwork" to 'calculated charges' vector qcal and pcal
 		for k in range(iuniq):
@@ -1491,12 +1669,6 @@ def matbld():
 		for j in range(iuniq+iuniq_p+nlgrng):
 			a[iuniq+iuniq_p+i][j] = lgrcnt[i][j]
 			a[j][iuniq+iuniq_p+i] = lgrcnt[i][j]
-
-	print("a")
-	print(a)
-	print()
-	print("b")
-	print(b)
 
 	# Add restraint to initial charge q0 and permanent dipole p0:
 	rstran()
@@ -2094,6 +2266,7 @@ def wrt_out():
 # The beginning of the main program
 #-----------------------------------------------------------------------
 
+print("Reading input file ...")
 ###### Get the file names ######
 Input,output,qin,polariz,qout,espot,esout = file_in()
 
@@ -2115,9 +2288,11 @@ input_file.close()
 if ipol > 0:
 	read_pol_dict()
 
+print("Reading espot file ...")
 ###### Read in the qm esp, forming the matrices a_pot and b_pot
 matpot()
 
+print("Building matrices for least-square fitting ...")
 ###### Initialize q0 and p0 according to iqopt
 init_q0_p0()
 
@@ -2130,6 +2305,7 @@ if ipermdip > 0:
 	pcal = np.zeros((iuniq_p))
 	pwtval = np.zeros((iuniq_p))
 
+print("Performing least-square fitting ...")
 if irstrnt == 2:
 	# If irstrnt= 2 then we just want to calculate esp's of q0's
 	for k in range(iuniq):
@@ -2144,6 +2320,7 @@ else:
 	# Do the charge fitting
 	charge_opt()
 
+print("Outputting statistics and molecular moments ...")
 ###### Calculate dipole moments ######
 calc_dip()
 
@@ -2163,6 +2340,9 @@ wrt_out()
 
 output_file.close()
 
+print("To cite PyRESP use:")
+print("Shiji Zhao, Haixin Wei, Piotr Cieplak, Yong Duan, and Ray Luo, \"PyRESP: A Flexible Program\n"
+	"for Additive and Polarizable Force Fields Parameterizations\" (Manuscript in preparation)" )
 #-----------------------------------------------------------------------
 # The end of the main program
 #-----------------------------------------------------------------------
