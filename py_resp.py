@@ -4,15 +4,15 @@
 #    History Versions and Authors
 #-----------------------------------------------------------------------
 #
-#      PyRESP version 1.0     Feburary 2022 - Shiji Zhao
+#      PyRESP version 1.0     Feb 2022 - Shiji Zhao
 #
-#      RESP   version 2.4     November 2013 - q4md-forcefieldtools.org
-#      RESP   version 2.2     January 2011 - q4md-forcefieldtools.org
-#      RESP   version 2.1     October 1994 - Jim Caldwell
-#      RESP   version 2.0     September 1992 - Christopher Bayly
+#      RESP   version 2.4     Nov 2013 - q4md-forcefieldtools.org
+#      RESP   version 2.2     Jan 2011 - q4md-forcefieldtools.org
+#      RESP   version 2.1     Oct 1994 - Jim Caldwell
+#      RESP   version 2.0     Sep 1992 - Christopher Bayly
 #
-#      ESPFIT version 1.0 (modified)  - Ian Gould
-#      ESPFIT version 1.0             - U.Chandra Singh and P.A.Kollman
+#      ESPFIT version 1.0 (modified)   - Ian Gould
+#      ESPFIT version 1.0              - U.Chandra Singh and P.A.Kollman
 #
 #-----------------------------------------------------------------------
 #    Affiliations
@@ -29,14 +29,13 @@
 #                 University of California, San Francisco
 #                 San Francisco, CA 94143
 #
-#-----------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------
 #
-#    THIS PROGRAM FITS THE QUANTUM MECHANICALLY CALCULATED ELECTROSTATIC
-#    POTENTIAL AT MOLECULAR SURFACES USING ELECTROSTATIC MODELS WITH
-#    ATOM-CENTERED (1) PERMANENT CHARGES AND (2) INDUCED DIPOLES AND (3)
-#    PERMANENT DIPOLES. THE MOLECULAR SURFACES ARE GENERATED BEYOND VANDER
-#    WAAL SURFACE IN ORDER TO MINIMISE OTHER CONTRIBUTIONS SUCH AS 
-#    EXCHANGE REPULSION AND CHARGE TRANSFER
+#    This program fits the quantum mechanically calculated electrostatic potential
+#    at molecular surfaces using electrostatic models with atom-centered (1) permanent
+#    charges and (2) induced dipoles and (3) permanent dipoles. The molecular surfaces
+#    should be generated beyond Van der Waal surface in order to minimize other 
+#    contributions such as exchange repulsion and charge transfer. 
 #
 #---------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------
@@ -45,14 +44,12 @@
 #
 #---------------------------------------------------------------------------------------------
 #
-#    -1st line-   TITLE          a character string
+#    -1st line-  TITLE          a character string
 #
 #---------------------------------------------------------------------------------------------
 #
-#    -2nd section-
-#
-#           OPTIONS FOR THE JOB begin with " &cntrl"
-#                               end with   " &end"
+#    -2nd section- control parameters
+#       begin with " &cntrl"; end with " &end"
 #
 #       nmol     =  the number of structure(s) in a multiple structure fit (default 1)
 #                   structure(s): orientation(s), conformation(s) or molecule(s)
