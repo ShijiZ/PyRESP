@@ -121,7 +121,7 @@
 #
 #---------------------------------------------------------------------------------------------
 #
-#     -6th area- one line for each atom
+#     -6th section- one line for each atom
 #        element number = element number in periodic table
 #        ivary          = control charge variations of each center
 #        (ivary_p       = control permanent dipole variations of each center)
@@ -134,11 +134,11 @@
 #
 #---------------------------------------------------------------------------------------------
 #
-#     -7th area- intra-molecular charge constraint(s); blank line if no constriant
+#     -7th section- intra-molecular charge constraint(s); blank line if no constriant
 #        ngrp = the number of charge centers in the group of atoms associated with this constraint
-#        grpchg = charge value to which the associated group of atoms (given on the next area) is to be constrained
+#        grpchg = charge value to which the associated group of atoms (given on the next section) is to be constrained
 #
-#     -7.1th area-
+#     -7.1th section-
 #        imol  iatom (repeat if more than 8 centers)
 #        the list ("ngrp" long) of the atoms to be constrained to the charge specified on the previous line.
 #
@@ -146,17 +146,17 @@
 #
 #---------------------------------------------------------------------------------------------
 #
-#     -8th area- inter-molecular charge constraint(s)
-#        same format as intra-molecular charge constraint(s) - see the 7th & 7.1th areas
+#     -8th section- inter-molecular charge constraint(s)
+#        same format as intra-molecular charge constraint(s) - see the 7th & 7.1th sections
 #
 #        blank to end
 #
 #---------------------------------------------------------------------------------------------
 #
-#     -9th area- multiple structure atom charge equivalencing
+#     -9th section- multiple structure atom charge equivalencing
 #        ngrp = the number of charge enters in the group of atoms for equivalencing
 #
-#     -9.1th area-
+#     -9.1th section-
 #        imol  iatom (repeat if more than 8 centers)
 #        the list ("ngrp" long) of the atoms to be equivalenced
 #
@@ -164,10 +164,10 @@
 #
 #---------------------------------------------------------------------------------------------
 #
-#     -10th area- multiple structure permanent dipole equivalencing
+#     -10th section- multiple structure permanent dipole equivalencing
 #        ngrp = the number of permanent dipole centers for the group of permanent dipoles for equivalencing
 #
-#     -9.1th area-
+#     -10.1th section-
 #        imol  idip (repeat if more than 8 centers)
 #        the list ("ngrp" long) of the permanent dipole to be equivalenced
 #
@@ -178,17 +178,15 @@
 #
 #    Unit -e (espot) input of ESP and coordinates
 #
-#---------------------------------------------------------------------------------------------
 #
 #     -1st line- natom   nesp (total number of atoms & ESP points)
 #
-#---------------------------------------------------------------------------------------------
 #
 #     -2nd line up to natom+1 line-
 #        atom coordinates X Y Z (in Bohrs) & element number & atom type
 #        Note: atom type can be generated with espgen program by setting -p 1 
 #
-#---------------------------------------------------------------------------------------------
+
 #
 #     -natom+2 line up to natom+2+nesp line- ESP & coordinates
 #        espot X Y Y (in a.u. & Bohrs)
@@ -199,18 +197,15 @@
 #    Unit -q (qin) input of replacement charges (and permanent dipoles) if requested
 #    (note same format as that produced by -t unit)
 #
-#---------------------------------------------------------------------------------------------
 #
 #     %FLAG TITLE: a character string
 #     subtitle for the structure 
 #
-#---------------------------------------------------------------------------------------------
 #
 #     %FLAG ATOM CRD: I4,3E16.7
 #     atm.no: atom number 
 #     X, Y, Z: atom coordinates X Y Z 
 #
-#---------------------------------------------------------------------------------------------
 #
 #     %FLAG ATOM CHRG: 2(I4,X7),I4,X2,E16.7
 #     atm,no: atom number
@@ -218,7 +213,6 @@
 #     ivary: charge variations
 #     q(opt): optimized atomic charge
 #
-#---------------------------------------------------------------------------------------------
 #
 #     %FLAG PERM DIP LOCAL: 3(I4,X5),I4,X2,E16.7 (for ipermdip = 1)
 #     dip.no: dipole number
@@ -227,18 +221,36 @@
 #     ivary: permanent dipole variations
 #     p(opt): optimized permanent dipole in local frame 
 #
-#---------------------------------------------------------------------------------------------
 #
 #     %FLAG PERM DIP GLOBAL: I4,3E16.7 (for ipermdip = 1)
 #     atm.no: atom number 
 #     X, Y, Z: optimized permanent dipole in X Y Z directions of global frame
 #
-#---------------------------------------------------------------------------------------------
 #
 #     %FLAG IND DIP GLOBAL: I4,3E16.7 (for ipol > 0)
 #     atm.no: atom number 
 #     X, Y, Z: induced dipole in X Y Z directions of global frame
 #
+#---------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------
+#
+#    Unit -ip (polariz) input of atomic polarizabilities if requested
+#
+#
+#     -1st line- Some comments
+#
+#
+#     -2st section- atom type & atomic polarizability (a.u.) & damping factor (a.u.)
+#        Note: For each of the provided damping schemes (Tinker-exponential. exponential, linear, and
+#             pGM), the damping factor has different meanings. See PyRESP publication for reference.        
+#
+#        end with a line starting with 'a' (unused)
+#
+#
+#     -3rd section- atom type equivalence information
+#        EQ & a list of atome types sharing identical polarizability and damping factors
+#
+
 import argparse as ap
 import numpy as np
 import sys
