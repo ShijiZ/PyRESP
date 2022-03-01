@@ -1,0 +1,137 @@
+
+ -----------------------------------------------
+              Py_RESP Version 1.0
+ -----------------------------------------------
+ resp-ind for water
+ -----------------------------------------------
+
+ ------------------
+ Control Parameters
+ ------------------
+ nmol        = 1   iqopt       = 1
+ ihfree      = 1   irstrnt     = 1
+ ioutopt     = 1   ireornt     = 0
+ iquad       = 1   qwt         = 0.00050000
+ ipol        = 5   igdm        = 1
+ exc12       = 0   exc13       = 0
+ ipermdip    = 1   pwt         = 0.00050000
+ virtual     = 1
+
+ --------------------
+ Molecule Information
+ --------------------
+ Single-molecule run
+
+ Molecule 1 weight:     1.000 
+ Molecule 1 name: water
+ Total charge (ich):  0
+ Number of centers:  3
+ Number of permanent dipoles:  6
+    1    8    0    0    1
+    2    1    0    0    0
+    3    1    2    3    4
+
+ -----------------------------
+ Atom/Dipole Ivary Information
+ -----------------------------
+    8    0    0    1
+    1    0    0    0
+    1    2    3    4
+
+ -------------------------
+ Input Information Summary
+ -------------------------
+ Total number of atoms      =    3
+ Total number of permanent dipoles      =    6
+ Weight factor on initial charge restraints=  0.000500
+ Weight factor on initial dipole restraints=  0.000500
+ There are  1 charge constraints
+
+ Read polarizability and radii information from:
+ ../../../polarizability/pGM-pol-2016-09-01
+ Assume the units are in a.u.
+
+ --------------------------------------
+ Atomic and ESP Coordinates Information
+ --------------------------------------
+ Reading esp's for molecule   1
+ total number of atoms      =     3
+ total number of esp points =   295
+
+ center       X               Y               Z
+    1  -9.9821230E-33   0.0000000E+00   2.3138460E-01
+    2  -2.6101230E-33   1.4941870E+00  -9.2553830E-01
+    3  -1.8298510E-16  -1.4941870E+00  -9.2553830E-01
+
+
+ ------------------------
+ Optimization Information
+ ------------------------
+ iqopt=1, all q0 and p0 values will be set to 0
+
+ Number of unique UNfrozen charge centers =     2
+ Number of unique UNfrozen permanent dipoles =     3
+
+ Non-linear optimization requested.
+  qchnge =    2.6836169922E-01
+  qchnge =    3.1542971525E-03
+  qchnge =    6.3844560679E-04
+  qchnge =    3.5329990203E-04
+  qchnge =    1.4327568359E-04
+  qchnge =    5.5983244892E-05
+  qchnge =    2.1752111181E-05
+  qchnge =    8.4435029426E-06
+  qchnge =    3.2768367524E-06
+  qchnge =    1.2716369961E-06
+  qchnge =    4.9347305089E-07
+
+ Convergence in   10 iterations
+
+ -----------------------
+ Fitting Results Summary
+ -----------------------
+ molecule 1: water
+
+          Point Charges Before & After Optimization
+ atm.no   element.no   q(init)        q(opt)     ivary    d(rstr)/dq
+    1         8        0.000000     -0.652626      0       0.000757
+    2         1        0.000000      0.326313      0       0.000000
+    3         1        0.000000      0.326313      2       0.000000
+
+ Sum over the calculated charges:     -0.000
+
+       Permanent Dipoles Before & After Optimization
+ dip.no   element.no   p(init)        p(opt)     ivary    d(rstr)/dp
+    1         8        0.000000      0.062790      0       0.004234
+    2         8        0.000000      0.062790      1       0.004234
+    3         1        0.000000     -0.058160      0       0.000000
+    4         1        0.000000      0.041064      0       0.000000
+    5         1        0.000000     -0.058160      3       0.000000
+    6         1        0.000000      0.041064      4       0.000000
+
+ --------------------------
+ Fitting Statistics Summary
+ --------------------------
+ The initial sum of squares  (ssvpot = sum_i(espi**2))          8.5437555E-02
+ The residual sum of squares (RSS = sum_i((espi-espclci)**2))   1.9070521E-04
+ The root-mean-squared error (RMSE = sqrt(RSS/N))               8.0402632E-04
+ The relative RMSE           (RRMSE = sqrt(RSS/ssvpot))         4.7245110E-02
+
+ ---------------------------
+ Molecular Multipole Summary
+ ---------------------------
+ Dipole Moments (Debye):
+ #MOL         D          Dx         Dy         Dz
+   1        1.71800   -0.00000    0.00000   -1.71800
+
+ Traceless Quadrupole Moments (Debye*Angst.):
+ #MOL          X          Y          Z
+   1    X   -0.86866
+        Y    0.00000    0.98514
+        Z    0.00000    0.00000   -0.11648
+
+ Traceless Quadrupole Moments in Principal Axes (Debye*Angst.):
+ #MOL          X          Y          Z
+   1    X    0.98514
+        Y    0.00000   -0.11648
+        Z    0.00000    0.00000   -0.86866

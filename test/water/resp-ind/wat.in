@@ -1,0 +1,22 @@
+resp-ind for water
+ &cntrl
+ nmol = 1,
+ iqopt = 1,
+ ihfree = 1,
+ qwt = 0.0005,
+ ioutopt = 1,
+ ipol = 5,
+ igdm = 1,
+ exc12 = 0,
+ exc13 = 0,
+ ipermdip = 0,
+ &end
+1.0
+water
+    0    3
+    8    0
+    1    0
+    1    2
+
+
+

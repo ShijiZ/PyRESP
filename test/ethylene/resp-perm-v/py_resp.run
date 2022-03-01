@@ -1,0 +1,19 @@
+#!/bin/csh -f
+echo " "
+echo "  py_resp demo: ethylene"
+echo " "
+
+../../../py_resp.py -O \
+		-i eth.in \
+		-o eth.out \
+		-s eth.esp \
+		-t eth.chg \
+		-ip ../../../polarizability/pGM-pol-2016-09-01 \
+		-e ../esp_eth.dat			|| goto error
+
+echo No errors detected
+exit(0)
+
+error:
+echo Error: check .out and try again
+exit(1)

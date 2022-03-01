@@ -1,0 +1,47 @@
+! optimized output polarizability data Fri Sep  2 02:34:37 2016      
+He           1.4753      0.8887
+Ne           2.5562      1.0674
+Ar          11.1661      1.7449
+hn           4.1389      1.3151
+ha           3.4609      1.5248
+hc           2.2427      0.6042
+hw           2.8839      1.3507  ##  1.7689  0.5788 1.3116 2.8689  2.8898  2.8898  1.7824   1.3065  4.200  1.3507
+h+           0.9748      0.6362
+c            9.9655      1.2572
+c1          11.4819      1.1122
+c2          11.7600      1.0878
+c3          11.9199      1.7926
+c-          24.9662      1.5595
+ca          12.4891      1.1523
+n            7.6500      0.9551
+n4           6.4825      0.9295
+o-           9.3179      1.0694
+ow           9.7782      1.5243  ## 8.0996 1.4721 1.4866 9.9000  6.0959  9.6659  7.9923   1.4836  9.9000  1.5243
+o            6.0707      0.9305
+cl          16.7090      1.3100
+br          24.1182      1.4263
+f            2.5576      0.8846
+i           32.9900      1.4584
+s           22.9802      1.3278
+s4          20.6518      1.6288
+p           18.7755      2.0496
+a            0.5825
+EQ       ha  h4  h5
+EQ       hc  HC  h1  hs  h2  h3  h   H   hp
+EQ       hw  ho  HO  HW
+EQ       h+  hx
+EQ       c   C   co  cz  ck
+EQ       c1  cg  cx  cf  ch  cv  cp  c0  cc  cd  ce
+EQ       c3  CT  cy  cs  cn
+EQ       ca  CA  cq
+EQ       n   N   n1  n2  nc  nb  n3  na  ne  nh  nx  nd  nf  no  np
+EQ       n4  n+
+EQ       ow  oh  OW  OH
+EQ       o   os  o2  o3
+EQ       cl  Cl
+EQ       br  Br
+EQ       f   F 
+EQ       i   I 
+EQ       s   S   s2  sh  ss
+EQ       s4  S4  sy  s6
+EQ       p   P   p5  p2  p4  p3

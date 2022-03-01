@@ -1,0 +1,30 @@
+#!/bin/csh -f
+echo " "
+echo "  py_resp demo: peptoid - a 2-stage fit"
+echo " "
+
+echo RESP stage 1:
+../../../py_resp.py -O \
+		-i pep_1.in \
+		-o pep_1.out \
+		-t pep_1.chg \
+		-ip ../../../polarizability/pGM-pol-2016-09-01 \
+		-s pep_1.esp \
+		-e ../pep_esp.dat 		||  goto error
+
+echo RESP stage 2:
+../../../py_resp.py -O \
+		-i pep_2.in \
+		-o pep_2.out \
+		-q pep_1.chg \
+		-t pep_2.chg \
+		-ip ../../../polarizability/pGM-pol-2016-09-01 \
+		-s pep_2.esp \
+		-e ../pep_esp.dat 		|| goto error
+
+echo No errors detected
+exit 0
+
+error:
+echo Error: check .out and try again
+exit(1)

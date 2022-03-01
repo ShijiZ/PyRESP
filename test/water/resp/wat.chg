@@ -1,0 +1,16 @@
+All values are reported in atomic units
+%FLAG TITLE
+ molecule 1: water
+
+%FLAG ATOM CRD: I4,3E16.7
+ atm.no      X               Y               Z
+   1  -9.9821230E-33   0.0000000E+00   2.3138460E-01
+   2  -2.6101230E-33   1.4941870E+00  -9.2553830E-01
+   3  -1.8298510E-16  -1.4941870E+00  -9.2553830E-01
+
+%FLAG ATOM CHRG: 2(I4,X7),I4,X2,E16.7
+ atm.no   element.no   ivary      q(opt)
+   1          8          0    -5.6818214E-01
+   2          1          0     2.8409107E-01
+   3          1          2     2.8409107E-01
+

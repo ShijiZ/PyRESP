@@ -1,0 +1,191 @@
+
+ -----------------------------------------------
+              Py_RESP Version 1.0
+ -----------------------------------------------
+  second stage of RESP. Peptoid for resp charge calculations
+ -----------------------------------------------
+
+ ------------------
+ Control Parameters
+ ------------------
+ nmol        = 1   iqopt       = 2
+ ihfree      = 1   irstrnt     = 1
+ ioutopt     = 1   ireornt     = 0
+ iquad       = 1   qwt         = 0.00100000
+ ipol        = 5   igdm        = 1
+ exc12       = 0   exc13       = 0
+
+ --------------------
+ Molecule Information
+ --------------------
+ Single-molecule run
+
+ Molecule 1 weight:     1.000 
+ Molecule 1 name: peptoid
+ Total charge (ich):  0
+ Number of centers: 22
+    1    1   -1
+    2    6   -1
+    3    1   -1
+    4    1   -1
+    5    6   -1
+    6    8   -1
+    7    7   -1
+    8    6    0
+    9    1    0
+   10    1    9
+   11    1    9
+   12    6    0
+   13    1    0
+   14    1   13
+   15    6   -1
+   16    8   -1
+   17    7   -1
+   18    1   -1
+   19    6   -1
+   20    1   -1
+   21    1   -1
+   22    1   -1
+
+ -----------------------------
+ Atom Ivary Information
+ -----------------------------
+    1   -1
+    6   -1
+    1   -1
+    1   -1
+    6   -1
+    8   -1
+    7   -1
+    6    0
+    1    0
+    1    9
+    1    9
+    6    0
+    1    0
+    1   13
+    6   -1
+    8   -1
+    7   -1
+    1   -1
+    6   -1
+    1   -1
+    1   -1
+    1   -1
+
+ -------------------------
+ Input Information Summary
+ -------------------------
+ Total number of atoms      =   22
+ Weight factor on initial charge restraints=  0.001000
+ There are  1 charge constraints
+
+ Read polarizability and radii information from:
+ ../../../polarizability/pGM-pol-2016-09-01
+ Assume the units are in a.u.
+
+ --------------------------------------
+ Atomic and ESP Coordinates Information
+ --------------------------------------
+ Reading esp's for molecule   1
+ total number of atoms      =    22
+ total number of esp points =   983
+
+ center       X               Y               Z
+    1   6.6911500E+00  -2.4155300E+00   1.9019460E+00
+    2   5.8593940E+00  -6.3711010E-01   1.3550270E+00
+    3   7.1693530E+00   3.8731120E-01   1.6170360E-01
+    4   5.4836410E+00   4.7919210E-01   3.0292610E+00
+    5   3.4325740E+00  -1.2236530E+00  -4.2293720E-02
+    6   2.7091160E+00  -3.3915580E+00  -3.5405420E-01
+    7   2.1000450E+00   7.8034240E-01  -9.8437610E-01
+    8   2.5933670E+00   3.4257410E+00  -3.3520140E-01
+    9   4.5896080E+00   3.7505730E+00  -8.2132520E-02
+   10   1.9628530E+00   4.6067420E+00  -1.8827110E+00
+   11   1.5824870E+00   3.9493260E+00   1.3602580E+00
+   12  -3.6201050E-01   2.1964500E-01  -2.0371270E+00
+   13  -8.2865300E-01   1.5992500E+00  -3.4771030E+00
+   14  -3.0660460E-01  -1.6413580E+00  -2.8683080E+00
+   15  -2.4034790E+00   2.7818140E-01   1.9197500E-03
+   16  -1.9891920E+00   9.8704980E-01   2.1548800E+00
+   17  -4.7025800E+00  -4.7466670E-01  -8.1969090E-01
+   18  -4.8996580E+00  -1.1204850E+00  -2.5775100E+00
+   19  -6.9003170E+00  -5.3917450E-01   8.5522230E-01
+   20  -6.3087580E+00   1.9254090E-01   2.6622220E+00
+   21  -8.4140140E+00   6.2202240E-01   1.1308310E-01
+   22  -7.5802200E+00  -2.4550250E+00   1.0958760E+00
+
+
+ ------------------------
+ Optimization Information
+ ------------------------
+ Since iqopt>1,   22 new q0 values will be read from file
+ pep_1.chg
+
+ Number of unique UNfrozen charge centers =     4
+
+ Non-linear optimization requested.
+  qchnge =    9.8423107191E-02
+  qchnge =    6.4540071870E-05
+  qchnge =    2.7056114394E-09
+
+ Convergence in    2 iterations
+
+ -----------------------
+ Fitting Results Summary
+ -----------------------
+ molecule 1: peptoid
+
+          Point Charges Before & After Optimization
+ atm.no   element.no   q(init)        q(opt)     ivary    d(rstr)/dq
+    1         1        0.026291      0.026291     -1       0.000000
+    2         6       -0.024707     -0.024707     -1       0.009708
+    3         1        0.095114      0.095114     -1       0.000000
+    4         1        0.070046      0.070046     -1       0.000000
+    5         6        0.859958      0.859958     -1       0.001155
+    6         8       -1.026702     -1.026702     -1       0.000969
+    7         7       -0.453997     -0.453997     -1       0.002151
+    8         6       -0.018386      0.000635      0       0.010000
+    9         1        0.120697      0.092978      0       0.000000
+   10         1        0.084429      0.092978      9       0.000000
+   11         1        0.084635      0.092978      9       0.000000
+   12         6        0.011324     -0.003102      0       0.009995
+   13         1        0.169853      0.157167      0       0.000000
+   14         1        0.138249      0.157167     13       0.000000
+   15         6        0.810625      0.810625     -1       0.001224
+   16         8       -0.947429     -0.947429     -1       0.001050
+   17         7       -0.830055     -0.830055     -1       0.001196
+   18         1        0.573685      0.573685     -1       0.000000
+   19         6       -0.015945     -0.015945     -1       0.009875
+   20         1        0.091101      0.091101     -1       0.000000
+   21         1        0.097190      0.097190     -1       0.000000
+   22         1        0.084023      0.084023     -1       0.000000
+
+ Sum over the calculated charges:      0.000
+
+ --------------------------
+ Fitting Statistics Summary
+ --------------------------
+ The initial sum of squares  (ssvpot = sum_i(espi**2))          4.4905295E-01
+ The residual sum of squares (RSS = sum_i((espi-espclci)**2))   2.9899367E-03
+ The root-mean-squared error (RMSE = sqrt(RSS/N))               1.7440311E-03
+ The relative RMSE           (RRMSE = sqrt(RSS/ssvpot))         8.1598508E-02
+
+ ---------------------------
+ Molecular Multipole Summary
+ ---------------------------
+ Dipole Moments (Debye):
+ #MOL         D          Dx         Dy         Dz
+   1        3.82090   -1.13525    2.53754   -2.62133
+
+ Traceless Quadrupole Moments (Debye*Angst.):
+ #MOL          X          Y          Z
+   1    X    9.90816
+        Y    7.55619   -7.60114
+        Z    6.07916   -1.50811   -2.30702
+
+ Traceless Quadrupole Moments in Principal Axes (Debye*Angst.):
+ #MOL          X          Y          Z
+   1    X   14.37199
+        Y    0.00000   -2.49061
+        Z    0.00000    0.00000  -11.88138

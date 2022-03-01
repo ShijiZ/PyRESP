@@ -1,0 +1,44 @@
+ second stage of RESP. Peptoid for resp charge calculations
+ &cntrl 
+ nmol = 1,
+ iqopt = 2,
+ ihfree = 1,
+ qwt = 0.001,
+ ioutopt = 1,
+ ipol = 5,
+ igdm = 1,
+ exc12 = 0,
+ exc13 = 0,
+ ipermdip = 1,
+ pwt = 0.001,
+ virtual = 0 
+ &end 
+    1.0
+peptoid
+    0   22 42
+    1   -1 -1
+    6   -1 -1 -1 -1 -1
+    1   -1 -1
+    1   -1 -1
+    6   -1 -1 -1 -1
+    8   -1 -1
+    7   -1 -1 -1 -1
+    6    0  0  0  16 16
+    1    0  0
+    1    9 19
+    1    9 19
+    6    0  0  0  23 0
+    1    0  0
+    1   13 26
+    6   -1 -1 -1 -1
+    8   -1 -1
+    7   -1 -1 -1 -1
+    1   -1 -1
+    6   -1 -1 -1 -1 -1
+    1   -1 -1
+    1   -1 -1
+    1   -1 -1
+
+
+
+

@@ -54,54 +54,54 @@
 #           OPTIONS FOR THE JOB begin with " &cntrl"
 #                               end with   " &end"
 #
-#		nmol     =  the number of structure(s) in a multiple structure fit (default 1)
+#       nmol     =  the number of structure(s) in a multiple structure fit (default 1)
 #                   structure(s): orientation(s), conformation(s) or molecule(s)
 #  
-#		iqopt    =  1  ... reset all initial charges (and permanent dipoles) to zero (default)
+#       iqopt    =  1  ... reset all initial charges (and permanent dipoles) to zero (default)
 #                =  2  ... read in new initial charges (and permanent dipoles) from -q unit
 #
-#		ihfree   =  0  ... all atoms are restrained
+#       ihfree   =  0  ... all atoms are restrained
 #                =  1  ... hydrogens not restrained (default)
 #
-#		irstrnt  =  0  ... harmonic restraints (old style)
+#       irstrnt  =  0  ... harmonic restraints (old style)
 #                =  1  ... hyperbolic restraint to charge of zero (default)
 #                =  2  ... only analysis of input charges; no charge fitting is carried out
 #                          
-#		qwt      =  restraint weight for charges; default is 0.0005
+#       qwt      =  restraint weight for charges; default is 0.0005
 #
-#		ioutopt  =  0  ... normal run
+#       ioutopt  =  0  ... normal run
 #                =  1  ... write restart info of new esp to -s unit (default)
 #
-#		ireornt  =  0  ... normal run (default)
+#       ireornt  =  0  ... normal run (default)
 #                =  1  ... reorient molecule to standard reorientation in Gaussian definition before 
 #                          calculating molecular dipole and quadrupole moments
 #
-#		iquad    =  0  ... report molecular quadrupole moment in Buckingham definition
+#       iquad    =  0  ... report molecular quadrupole moment in Buckingham definition
 #                =  1  ... report molecular quadrupole moment in Gaussian definition (default)
 #
-#		ipol     =  0  ... additive RESP model; no atomic dipole calculations
+#       ipol     =  0  ... additive RESP model; no atomic dipole calculations
 #                   1  ... Applequist scheme without damping
 #                   2  ... Tinker-exponential damping scheme
 #                   3  ... exponential damping scheme
 #                   4  ... linear damping scheme
 #                   5  ... pGM damping scheme(default)
 #               
-#		igdm     =  0  ... normal run
+#       igdm     =  0  ... normal run
 #                =  1  ... use distributed pGM charges and dipoles in ESP fitting (default)
 #                          only use with ipol = 5
 #
-#		exc12    =  0  ... include 1-2 interactions for electric field calculations (default)
+#       exc12    =  0  ... include 1-2 interactions for electric field calculations (default)
 #                =  1  ... exclude 1-2 interactions
 #
-#		exc13    =  0  ... include 1-3 interactions for electric field calculations (default)
+#       exc13    =  0  ... include 1-3 interactions for electric field calculations (default)
 #                =  1  ... exclude 1-3 interactions
 #
-#		ipermdip =  0  ... RESP-ind model; do not calculate permanent dipole
+#       ipermdip =  0  ... RESP-ind model; do not calculate permanent dipole
 #                =  1  ... RESP-perm model; calculate permanent dipoles (default)
 #
-#		pwt      =  restraint weight for permanent dipoles; default is 0.0005
+#       pwt      =  restraint weight for permanent dipoles; default is 0.0005
 #
-#		virtual  =  0  ... normal run (default)
+#       virtual  =  0  ... normal run (default)
 #                =  1  ... enable permanent dipoles for 1-3 virtual bonds
 #
 #---------------------------------------------------------------------------------------------
@@ -115,7 +115,9 @@
 #---------------------------------------------------------------------------------------------
 #
 #     -5th line- charge   iuniq   (iuniq_p)
-#        total charge value & total number of atoms & total number of permanent dipoles for the considered structure   
+#        charge  = total charge value for this structure (-99 if no total charge constraint)
+#        iuniq   = total number of atoms for this structure
+#        iuniq_p = total number of permanent dipoles for this structure
 #
 #---------------------------------------------------------------------------------------------
 #
@@ -123,6 +125,8 @@
 #        element number = element number in periodic table
 #        ivary          = control charge variations of each center
 #        (ivary_p       = control permanent dipole variations of each center)
+#        Note: The permanent dipoles of each atom are ordered with the atom number of reference atoms.
+#              If virtual = 1, real permanent dipoles come before all virtual dipoles for each atom.
 #        ivary & ivary_p 
 #                       =  0 current charge fitted independently of other centers
 #                       = -1 current charge frozen at "initial stage" value typically read in from -q unit
@@ -182,6 +186,7 @@
 #
 #     -2nd line up to natom+1 line-
 #        atom coordinates X Y Z (in Bohrs) & element number & atom type
+#        Note: atom type can be generated with espgen program by setting -p 1 
 #
 #---------------------------------------------------------------------------------------------
 #
@@ -2340,9 +2345,12 @@ wrt_out()
 
 output_file.close()
 
+print("-----------------------------------------------------------------")
 print("To cite PyRESP use:")
-print("Shiji Zhao, Haixin Wei, Piotr Cieplak, Yong Duan, and Ray Luo, \"PyRESP: A Flexible Program\n"
-	"for Additive and Polarizable Force Fields Parameterizations\" (Manuscript in preparation)" )
+print()
+print("  Shiji Zhao, Haixin Wei, Piotr Cieplak, Yong Duan, and Ray Luo, \n"
+	"  \"PyRESP: A Flexible Program for Additive and Polarizable Force \n"
+	"  Fields Parameterizations\" (Manuscript in preparation)")
 #-----------------------------------------------------------------------
 # The end of the main program
 #-----------------------------------------------------------------------

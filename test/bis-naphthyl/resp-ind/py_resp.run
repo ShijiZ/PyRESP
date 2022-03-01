@@ -1,0 +1,30 @@
+#!/bin/csh -f
+echo " "
+echo "  py_resp demo: bis-napthyl - a 2-stage fit on 2 conformations"
+echo " "
+
+echo RESP stage 1:
+../../../py_resp.py -O \
+		-i bis_1.in \
+		-o bis_1.out \
+		-t bis_1.chg \
+		-ip ../../../polarizability/pGM-pol-2016-09-01 \
+		-s bis_1_calc.esp \
+		-e ../bis_esp.dat			|| goto error
+
+echo RESP stage 2:
+../../../py_resp.py -O \
+		-i bis_2.in \
+		-o bis_2.out \
+		-e ../bis_esp.dat \
+		-q bis_1.chg \
+		-s bis_2_calc.esp \
+		-ip ../../../polarizability/pGM-pol-2016-09-01 \
+		-t bis_2.chg			|| goto error
+
+echo No errors detected
+exit(0)
+
+error:
+echo Error: check .out and try again
+exit(1)
