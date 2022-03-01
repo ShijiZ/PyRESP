@@ -15,20 +15,20 @@ This is the repository for the PyRESP (Python Restrained Electrostatic Potential
 ## Test Cases
 Four test cases are provided which covers a range of posibilities. Run `./py_resp.run` in each subfolder under [test](https://github.com/ShijiZ/PyRESP/tree/master/test) for testing.
 
-1. water
+1. [water](https://github.com/ShijiZ/PyRESP/tree/master/test/water)
 - **Models:** resp, resp-ind, resp-perm and resp-perm-v.
 - **Test:** One-stage fitting on a single conformation.
 
-2. ethylene
+2. [ethylene](https://github.com/ShijiZ/PyRESP/tree/master/test/ethylene)
 - **Models:** resp, resp-ind, resp-perm and resp-perm-v.
 - **Test:** One stage fitting on a single conformation. No total charge constraint applied.
 
-3. peptoid
+3. [peptoid](https://github.com/ShijiZ/PyRESP/tree/master/test/peptoid)
 - **Models:** resp, resp-ind and resp-perm.
 - **Test:** Two stage fitting on a single conformation. Intra-molecular fractional charge constraint applied.
 - **Note:** A peptide-type residue with consistent constraints with Cornell et al. '95 force fields.
 
-4. bis-naphthyl
+4. [bis-naphthyl](https://github.com/ShijiZ/PyRESP/tree/master/test/bis-naphthyl)
 - **Models:** resp, resp-ind and resp-perm.
 - **Test:** Two stage fitting on a two conformations. Inter-molecular fractional charge constraint applied.
 - **Note:** Two *2-Methyl-3-naphthylpropionic acid* molecules fitted together to obtain charges for the "super molecule" *bis-(naphthyl-1-methyl) acetic acid*.
