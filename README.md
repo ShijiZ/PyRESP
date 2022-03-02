@@ -20,10 +20,12 @@ This program runs with Python 3. To run this program, make sure the following de
 
 The following command should install all required libraries:
 
-`pip install numpy scipy f90nml`
+`$ pip install numpy scipy f90nml`
 
 ## Test Cases
-Four test cases are provided which covers a range of posibilities. Run `./py_resp.run` in each subfolder under [test](https://github.com/ShijiZ/PyRESP/tree/master/test) for testing.
+Four test cases are provided which covers a range of posibilities. Run the following script in each subfolder under [test](https://github.com/ShijiZ/PyRESP/tree/master/test) for testing.
+
+`$ ./py_resp.run` 
 
 1. [water](https://github.com/ShijiZ/PyRESP/tree/master/test/water)
 - **Models:** resp, resp-ind, resp-perm and resp-perm-v.
