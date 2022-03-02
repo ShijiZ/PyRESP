@@ -12,6 +12,14 @@ This is the repository for the PyRESP (Python Restrained Electrostatic Potential
     ESPFIT version 1.0 (modified)   - Ian Gould
     ESPFIT version 1.0              - U.Chandra Singh and P.A.Kollman
 
+## Library Dependencies
+This program runs with Python 3. To run this program, make sure the following dependencies are installed:
+- [numpy](https://numpy.org/): A Python library supporting for large, multi-dimensional arrays and matrices.
+- [scipy](https://scipy.org/): A Python library used for scientific computing and technical computing.
+- [f90nml](https://github.com/marshallward/f90nml): A Python module providing interface for reading, writing, and modifying Fortran namelists.
+The following command should install all required libraries:
+`pip install numpy scipy f90nml`
+
 ## Test Cases
 Four test cases are provided which covers a range of posibilities. Run `./py_resp.run` in each subfolder under [test](https://github.com/ShijiZ/PyRESP/tree/master/test) for testing.
 
