@@ -1,4 +1,4 @@
-resp-ind for water
+resp-perm-v for water
  &cntrl
  nmol = 1,
  iqopt = 1,
