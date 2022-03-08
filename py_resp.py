@@ -191,7 +191,7 @@
 #---------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------
 #
-#    Unit -q (qin) input of replacement charges (and permanent dipoles) if requested
+#    Unit -q (qin) input of replacement parameters if requested
 #    (note same format as that produced by -t unit)
 #
 #
@@ -311,12 +311,12 @@ n12_list,dict12_list,n13_list,dict13_list,exc12,exc13,virtual = [None]*7
 def file_in():
 	parser = ap.ArgumentParser(usage='py_resp.py [-O] -i input -o output [-q qin] [-ip polariz] -t qout -e espot -s esout')
 	parser.add_argument("-O", action='store_true', help="Overwrite output files if they exist")
-	parser.add_argument("-i", "--input", required=True, help="type: input, required; description: input options")
+	parser.add_argument("-i", "--input", required=True, help="type: input, required; description: input of general information")
 	parser.add_argument("-e", "--espot", required=True, help="type: input, required; description: input of ESP and coordinates")
-	parser.add_argument("-q", "--qin", help="type: input, optional; description: replacement charges")
+	parser.add_argument("-q", "--qin", help="type: input, optional; description: replacement parameters")
 	parser.add_argument("-o", "--output", required=True, help="type: output, always produced; description: output of results")
-	parser.add_argument("-t", "--qout", required=True, help="type: output, always produced; description: output of current charges")
-	parser.add_argument("-s", "--esout", help="type: output, optional; description: generated ESP values for new charges")
+	parser.add_argument("-t", "--qout", required=True, help="type: output, always produced; description: output of parameters")
+	parser.add_argument("-s", "--esout", help="type: output, optional; description: generated ESP values for new parameters")
 	parser.add_argument("-ip", "--polariz", help="type: input, optional; description: atomic polarizabilities")
 	
 	args = parser.parse_args()
