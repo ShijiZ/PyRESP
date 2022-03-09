@@ -166,7 +166,7 @@
 #
 #     -10.1th section-
 #        imol  idip (repeat if more than 8 centers)
-#        the list ("ngrp" long) of the permanent dipole to be equivalenced
+#        the list ("ngrp" long) of the permanent dipoles to be equivalenced
 #
 #        blank to end
 #
@@ -181,9 +181,8 @@
 #
 #     -2nd line up to natom+1 line-
 #        atom coordinates X Y Z (in Bohrs) & element number & atom type
-#        Note: atom type can be generated with espgen program by setting -p 1 
+#        Note: atom type can be generated with the espgen program by setting -p 1 
 #
-
 #
 #     -natom+2 line up to natom+2+nesp line- ESP & coordinates
 #        espot X Y Y (in a.u. & Bohrs)
