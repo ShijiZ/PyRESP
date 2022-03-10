@@ -61,8 +61,8 @@
 #                =  1  ... hydrogens not restrained (default)
 #
 #       irstrnt  =  0  ... harmonic restraints (old style)
-#                =  1  ... hyperbolic restraint to charge of zero (default)
-#                =  2  ... only analysis of input charges; no charge fitting is carried out
+#                =  1  ... hyperbolic restraint to parameters of zero (default)
+#                =  2  ... only analysis of input parameters; no parameterization is carried out
 #                          
 #       qwt      =  restraint weight for charges; default is 0.0005
 #
@@ -125,9 +125,9 @@
 #        Note: The permanent dipoles of each atom are ordered with the atom number of reference atoms.
 #              If virtual = 1, real permanent dipoles come before all virtual dipoles for each atom.
 #        ivary & ivary_p 
-#                       =  0 current charge fitted independently of other centers
-#                       = -1 current charge frozen at "initial stage" value typically read in from -q unit
-#                       =  n current charge fitted and equivalenced to that of center "n"
+#                       =  0 current parameters fitted independently of other centers
+#                       = -1 current parameters frozen at "initial stage" value typically read in from -q unit
+#                       =  n current parameters fitted and equivalenced to that of center "n"
 #
 #---------------------------------------------------------------------------------------------
 #
