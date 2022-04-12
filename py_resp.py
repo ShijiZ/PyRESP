@@ -1257,8 +1257,8 @@ def bld_AinvQP(imol, atype):
 
 				# Fill the diagonal elements of the off-diagonal matrices of PFld
 				if ipermdip > 0:
-					PFld[idx1][idx2] = element2
-					PFld[idx2][idx1] = element2
+					PFld[idx1][idx2] = -element2
+					PFld[idx2][idx1] = -element2
 
 			for k in range(2):
 				for l in range(k+1, 3):
@@ -1276,10 +1276,10 @@ def bld_AinvQP(imol, atype):
 
 					# Fill the off-diagonal elements of the off-diagonal matrices of PFld
 					if ipermdip > 0:
-						PFld[idx1][idx2] = element
-						PFld[idx3][idx4] = element
-						PFld[idx2][idx1] = element
-						PFld[idx4][idx3] = element
+						PFld[idx1][idx2] = -element
+						PFld[idx3][idx4] = -element
+						PFld[idx2][idx1] = -element
+						PFld[idx4][idx3] = -element
 
 	###############################
 	# Section 3. Build matrix L2G #
