@@ -1572,7 +1572,7 @@ def charge_opt():
 
 	# criteria for convergence & maximum iterations for the non-linear optimizations
 	qtol = 0.000001
-	maxit = 24
+	maxit = 42
 
 	# Only on first pass through this function (indicated by nitern= 0), if irstrnt > 0, transfer irstrnt to irsave
 	# and reset irstrnt to 0, in order to get an initial guess using a harmonic constraint. This is done so the
