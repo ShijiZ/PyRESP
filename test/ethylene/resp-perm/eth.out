@@ -82,24 +82,23 @@
  Number of unique UNfrozen permanent dipoles =     3
 
  Non-linear optimization requested.
-  qchnge =    1.3147984337E-01
-  qchnge =    3.1646578134E-02
-  qchnge =    1.1019674911E-02
-  qchnge =    4.5952681925E-03
-  qchnge =    2.0530537382E-03
-  qchnge =    9.4469728768E-04
-  qchnge =    4.4050527971E-04
-  qchnge =    2.0666665831E-04
-  qchnge =    9.7237053178E-05
-  qchnge =    4.5811669723E-05
-  qchnge =    2.1597067307E-05
-  qchnge =    1.0184569754E-05
-  qchnge =    4.8034305848E-06
-  qchnge =    2.2656305241E-06
-  qchnge =    1.0686616298E-06
-  qchnge =    5.0407791619E-07
+  qchnge =    1.0789115490E-01
+  qchnge =    2.4028969490E-02
+  qchnge =    8.2967406685E-03
+  qchnge =    3.4336824341E-03
+  qchnge =    1.5061510196E-03
+  qchnge =    6.7530563161E-04
+  qchnge =    3.0533102090E-04
+  qchnge =    1.3844782515E-04
+  qchnge =    6.2815572660E-05
+  qchnge =    2.8492842763E-05
+  qchnge =    1.2917176507E-05
+  qchnge =    5.8525320252E-06
+  qchnge =    2.6502405814E-06
+  qchnge =    1.1995686721E-06
+  qchnge =    5.4274642757E-07
 
- Convergence in   15 iterations
+ Convergence in   14 iterations
 
  -----------------------
  Fitting Results Summary
@@ -108,51 +107,51 @@
 
           Point Charges Before & After Optimization
  atm.no   element.no   q(init)        q(opt)     ivary    d(rstr)/dq
-    1         6        0.000000     -0.278122      0       0.001692
-    2         6        0.000000     -0.278122      1       0.001692
-    3         1        0.000000      0.139596      0       0.000000
-    4         1        0.000000      0.139596      3       0.000000
-    5         1        0.000000      0.139596      3       0.000000
-    6         1        0.000000      0.139596      3       0.000000
+    1         6        0.000000     -0.240050      0       0.001923
+    2         6        0.000000     -0.240050      1       0.001923
+    3         1        0.000000      0.120521      0       0.000000
+    4         1        0.000000      0.120521      3       0.000000
+    5         1        0.000000      0.120521      3       0.000000
+    6         1        0.000000      0.120521      3       0.000000
 
  Sum over the calculated charges:      0.002
 
        Permanent Dipoles Before & After Optimization
  dip.no   element.no   p(init)        p(opt)     ivary    d(rstr)/dp
-    1         6        0.000000     -0.060221      0       0.004283
-    2         6        0.000000      0.028260      0       0.004812
-    3         6        0.000000      0.028260      2       0.004812
-    4         6        0.000000     -0.060221      1       0.004283
-    5         6        0.000000      0.028260      2       0.004812
-    6         6        0.000000      0.028260      2       0.004812
-    7         1        0.000000     -0.088669      0       0.000000
-    8         1        0.000000     -0.088669      7       0.000000
-    9         1        0.000000     -0.088669      7       0.000000
-   10         1        0.000000     -0.088669      7       0.000000
+    1         6        0.000000     -0.202861      0       0.002211
+    2         6        0.000000      0.053659      0       0.004406
+    3         6        0.000000      0.053659      2       0.004406
+    4         6        0.000000     -0.202861      1       0.002211
+    5         6        0.000000      0.053659      2       0.004406
+    6         6        0.000000      0.053659      2       0.004406
+    7         1        0.000000     -0.117910      0       0.000000
+    8         1        0.000000     -0.117910      7       0.000000
+    9         1        0.000000     -0.117910      7       0.000000
+   10         1        0.000000     -0.117910      7       0.000000
 
  --------------------------
  Fitting Statistics Summary
  --------------------------
  The initial sum of squares  (ssvpot = sum_i(espi**2))          2.0365103E-02
- The residual sum of squares (RSS = sum_i((espi-espclci)**2))   5.2655503E-04
- The root-mean-squared error (RMSE = sqrt(RSS/N))               1.0793261E-03
- The relative RMSE           (RRMSE = sqrt(RSS/ssvpot))         1.6079723E-01
+ The residual sum of squares (RSS = sum_i((espi-espclci)**2))   3.1378329E-04
+ The root-mean-squared error (RMSE = sqrt(RSS/N))               8.3319315E-04
+ The relative RMSE           (RRMSE = sqrt(RSS/ssvpot))         1.2412853E-01
 
  ---------------------------
  Molecular Multipole Summary
  ---------------------------
  Dipole Moments (Debye):
  #MOL         D          Dx         Dy         Dz
-   1        0.00000    0.00000    0.00000   -0.00000
+   1        0.00000    0.00000   -0.00000   -0.00000
 
  Traceless Quadrupole Moments (Debye*Angst.):
  #MOL          X          Y          Z
-   1    X   -2.12475
-        Y    0.00000    0.89360
-        Z    0.00000    0.00000    1.23115
+   1    X   -2.09943
+        Y    0.00000    0.91017
+        Z    0.00000    0.00000    1.18925
 
  Traceless Quadrupole Moments in Principal Axes (Debye*Angst.):
  #MOL          X          Y          Z
-   1    X    1.23115
-        Y    0.00000    0.89360
-        Z    0.00000    0.00000   -2.12475
+   1    X    1.18925
+        Y    0.00000    0.91017
+        Z    0.00000    0.00000   -2.09943
