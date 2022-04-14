@@ -2357,8 +2357,8 @@ print("-----------------------------------------------------------------")
 print("To cite PyRESP use:")
 print()
 print("  Shiji Zhao, Haixin Wei, Piotr Cieplak, Yong Duan, and Ray Luo, \n"
-	"  \"PyRESP: A Flexible Program for Additive and Polarizable Force \n"
-	"  Fields Parameterizations\" (Manuscript in preparation)")
+	"  \"PyRESP: A Program for Electrostatic Parameterizations of Additive \n"
+	"  and Polarizable Force Fields\". J. Chem. Theory Comput., 2022.")
 #-----------------------------------------------------------------------
 # The end of the main program
 #-----------------------------------------------------------------------
