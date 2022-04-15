@@ -881,6 +881,8 @@ def build_bonds(imol, natm):
 						bonded = dist2 < cutoff2[4]
 				elif (izi == 7 and izj == 8) or (izi == 8 and izj == 7):
 					bonded = dist2 < cutoff2[5]
+				elif (izi == 15 and izj == 8) or (izi == 8 and izj == 15):
+					bonded = dist2 < cutoff2[1]
 				elif izi == 1 or izj == 1:
 					bonded = dist2 < cutoff2[6]
 				if bonded:
