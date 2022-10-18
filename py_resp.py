@@ -185,7 +185,7 @@
 #
 #
 #     -natom+2 line up to natom+2+nesp line- ESP & coordinates
-#        espot X Y Y (in a.u. & Bohrs)
+#        espot X Y Z (in a.u. & Bohrs)
 #
 #---------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------
@@ -1060,9 +1060,9 @@ def matpot():
 
 			AinvQ_list.append(AinvQ)
 
-		#############################################
+		###############################################
 		# Section 2.4. build a_pot, b_pot and mat_pot #
-		#############################################
+		###############################################
 		wt = wtmol[imol]
 		wt2 = wt*wt
 		xij = np.ndarray((3)) # local variable for the distance elements between esp point i and atom j
@@ -1562,7 +1562,7 @@ def data_prep():
 
 def charge_opt():
 	#########################################################################
-	# This function is the driver for the charge determinization/optimizaton.
+	# This function is the driver for charge (and permanent dipole) fitting
 	#
 	# called from Main
 	#########################################################################
@@ -1601,7 +1601,7 @@ def charge_opt():
 		awork, piv = lu_factor(awork, overwrite_a=True)
 		bwork = lu_solve((awork, piv), bwork, overwrite_b=True)
 	
-		# -- copy solution vector "bwork" to 'calculated charges' vector qcal and pcal
+		# -- copy solution vector "bwork" to 'calculated parameters' qcal and pcal
 		for k in range(iuniq):
 			icntr = iqpcntr[k]
 			if icntr >= 1:
@@ -1663,7 +1663,7 @@ def matbld():
 	#   stage 1: copy weighted matrices a_pot and b_pot to work arrays awork and bwork (which are destroyed in
 	#            the LU decomp & back subst)
 	#
-	#   stage 2: if charge restraints are to be included, then modify awork and bwork appropriately  
+	#   stage 2: if charge (and permanent dipole) are to be restrained, modify awork and bwork appropriately  
 	#
 	# called from charge_opt()
 	##########################################################################################################
@@ -1690,17 +1690,18 @@ def matbld():
 
 	# Build awork and bwork based on "combined and frozen centers" info:
 	#
-	# 1) Frozen centers do not appear in the matrix of fitted charges
-	# 2) Combined centers appear as one single charge center for fitting
+	# 1) Frozen centers do not appear in the matrix of fitted charges (or permanent dipoles)
+	# 2) Combined centers appear as one single charge (or permanent dipole) center for fitting
 	#
 	# First, since we accumulate values, zero out awork & bwork up to nqpl (the independant + contraint number):
 	awork = np.zeros((nqpl,nqpl))
 	bwork = np.zeros((nqpl))
 
 	# Loop over all centers, building awork & bwork from A and B based on iqpcntr: for each center, iqpcntr[i]
-	# dictates which of the fitted charges it is and therefore where it goes in the matrices. If iqpcntr[j] < 1,
-	# this center is a frozen charge and it is skipped as far as forming a row in awork, and its esp contribution
-	# is subtracted from bwork to take care of it's awork jth column-element for each i.
+	# dictates which of the fitted charges (or permanent dipoles) it is and therefore where it goes in the matrices.
+	# If iqpcntr[j] < 1, this center is a frozen charge (or permanent dipole) and it is skipped as far as forming a
+	# row in awork, and its esp contribution is subtracted from bwork to take care of it's awork jth column-element
+	# for each i.
 	for i in range(iuniq+iuniq_p+nlgrng):
 		icntr = iqpcntr[i]
 		if icntr > 0:
@@ -1724,20 +1725,21 @@ def rstran():
 	# This function assigns the retraint weights to the diagonal of A and to B.
 	#
 	#----------------------------------------------------------------------
-	# Two kinds of restraint are available:
+	# Two kinds of restraints are available:
 	#
-	# a) A harmonic restraint to the initial charge. Fine as long as there aren't any large charges that SHOULD
-	#  be large... these really feel a strong force if they are restrained to a low value.
+	# a) Harmonic restraint to the initial charges (and permanent dipoles). Fine as long as there aren't any
+	#  large charges (and permanent dipoles) that SHOULD be large... these really feel a strong force if they
+	#  are restrained to a low value.
 	#
-	# b) A hyperbolic restraint to a charge of 0. This gets asymptotic at "large" values, so "large" charges
-	#  aren't pulled down any stronger than some (reasonable) limiting force.  This is a non-linear weighting
-	#  function, so the fit procedure is iterative.
+	# b) Hyperbolic restraint to charges (and permanent dipoles) towards 0. This gets asymptotic at "large"
+	#  values, so "large" charges (and permanent dipoles) aren't pulled down any stronger than some (reasonable)
+	#  limiting force.  This is a non-linear weighting function, so the fit procedure is iterative.
 	#
-	# Other options for restraints to initial charge q0[i]:
-	# if requested, restrain the charges by modifying the sum-of-squares cost function derivative. The scheme
-	# for doing this is as follows:
+	# Other options for restraints to initial charges (and permanent dipoles):
+	# if requested, restrain the charges (and permanent dipoles) by modifying the sum-of-squares cost function
+	# derivative. The scheme for doing this is as follows:
 	#
-	# If control variable ihfree > 0, let hydrogen charges and permanent dipoles free (i.e. reset their qwtval
+	# If control variable ihfree > 0, let hydrogen charges (and permanent dipoles) free (i.e. reset their qwtval
 	# and pwtval to 0.0).
 	#-----------------------------------------------------------------------
 	#
@@ -2303,15 +2305,14 @@ input_file.close()
 if ipol > 0:
 	read_pol_dict()
 
-print("Reading espot file ...")
+print("Reading espot file and building matrices ...")
 ###### Read in the qm esp, forming the matrices a_pot and b_pot
 matpot()
 
-print("Building matrices for least-square fitting ...")
 ###### Initialize q0 and p0 according to iqopt
 init_q0_p0()
 
-###### Process the input (freezing, equivalencing charges)
+###### Process the input (freezing, equivalencing charges and permanent dipoles)
 data_prep()
 
 qcal = np.zeros((iuniq))
@@ -2320,9 +2321,8 @@ if ipermdip > 0:
 	pcal = np.zeros((iuniq_p))
 	pwtval = np.zeros((iuniq_p))
 
-print("Performing least-square fitting ...")
 if irstrnt == 2:
-	# If irstrnt= 2 then we just want to calculate esp's of q0's
+	# If irstrnt= 2 then we just want to calculate esp's of q0's (and p0's)
 	for k in range(iuniq):
 		qcal[k] = q0[k]
 	qwt = 0.0
@@ -2332,7 +2332,8 @@ if irstrnt == 2:
 			pcal[k] = p0[k]
 		pwt = 0.0
 else:
-	# Do the charge fitting
+	# Do the least-squares fitting
+	print("Performing least-squares fitting ...")
 	charge_opt()
 
 print("Outputting statistics and molecular moments ...")
@@ -2361,7 +2362,7 @@ print()
 print("  Shiji Zhao, Haixin Wei, Piotr Cieplak, Yong Duan, and Ray Luo, \n"
 	"  \"PyRESP: A Program for Electrostatic Parameterizations of Additive \n"
 	"  and Induced Dipole Polarizable Force Fields\". J. Chem. Theory \n"
-	"  Comput., 2022.")
+	"  Comput. 2022, 18, 6, 3654-3670.")
 #-----------------------------------------------------------------------
 # The end of the main program
 #-----------------------------------------------------------------------
