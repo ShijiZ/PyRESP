@@ -44,3 +44,8 @@ Four test cases are provided which covers a range of posibilities. Run the follo
 - **Models:** resp, resp-ind and resp-perm.
 - **Test:** Two stage fitting on a two conformations. Inter-molecular fractional charge constraint applied.
 - **Note:** Two *2-Methyl-3-naphthylpropionic acid* molecules fitted together to obtain charges for the "super molecule" *bis-(naphthyl-1-methyl) acetic acid*.
+
+## Citation
+To cite PyRESP, see the following publication:
+
+[Shiji Zhao, Haixin Wei, Piotr Cieplak, Yong Duan, and Ray Luo, "PyRESP: A Program for Electrostatic Parameterizations of Additive and Induced Dipole Polarizable Force Fields". J. Chem. Theory Comput. 2022, 18, 6, 3654-3670](https://pubs.acs.org/doi/full/10.1021/acs.jctc.2c00230).
