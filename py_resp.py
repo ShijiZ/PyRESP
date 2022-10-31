@@ -1004,8 +1004,8 @@ def matpot():
 		###################################################
 		if ipol > 0:
 			atype = []    # local variable
-		line = espot_file.readline().split()
-		natm, nesp = int(line[0]), int(line[1])
+		line = espot_file.readline()
+		natm, nesp = int(line[0:5]), int(line[5:10])
 
 		tot_nesp += nesp
 		max_nesp = max(max_nesp, nesp)
@@ -2106,8 +2106,8 @@ def evlchi():
 	chipot = 0.0
 	for imol in range(nmol):
 		# Read the metainfo of molecule imol
-		line = espot_file.readline().split()
-		natm, nesp = int(line[0]), int(line[1])
+		line = espot_file.readline()
+		natm, nesp = int(line[0:5]), int(line[5:10])
 		if ioutopt == 1:
 			esout_file.write("molecule %d: %s"%(imol+1, title[imol]))
 			esout_file.write("nesp: %d   natm: %d\n"%(nesp, natm))
