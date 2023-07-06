@@ -45,6 +45,9 @@ Four test cases are provided which covers a range of posibilities. Run the follo
 - **Test:** Two stage fitting on a two conformations. Inter-molecular fractional charge constraint applied.
 - **Note:** Two *2-Methyl-3-naphthylpropionic acid* molecules fitted together to obtain charges for the "super molecule" *bis-(naphthyl-1-methyl) acetic acid*.
 
+## Resources
+The `pyresp_gen.py` program for automatically generating input files for `py_resp.py` is available [here](https://github.com/csu1505110121/pyresp_gen).
+
 ## Citation
 To cite PyRESP, see the following publication:
 
