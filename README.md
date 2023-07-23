@@ -22,6 +22,12 @@ The following command should install all required libraries:
 
 `$ pip install numpy scipy f90nml`
 
+## Tutorial and Documentation
+The tutorial of using `py_resp.py` for electrostatic parameterizations for pyridoxal phosphate (PLP) can be found [here](http://htmlpreview.github.io/?https://github.com/ShijiZ/PyRESP/blob/master/tutorial/pyresp.html). Note that following this tutorial requires the installation of [AmberTools](https://ambermd.org/AmberTools.php), which also contains:
+- The `pyresp_gen.py` program for automatically generating input files for `py_resp.py` (Ther standalone version of `pyresp_gen.py` is available [here](https://github.com/csu1505110121/pyresp_gen));
+- The `espgen` program for converting Gaussian output files to esp input files for `py_resp.py`.
+The full documentation of `pyresp_gen.py` and `py_resp.py` is available in page 358 of [Amber 2023 manual](https://ambermd.org/doc12/Amber23.pdf#page=358).
+
 ## Test Cases
 Four test cases are provided which covers a range of posibilities. Run the following script in each subfolder under [test](https://github.com/ShijiZ/PyRESP/tree/master/test) for testing.
 
@@ -44,9 +50,6 @@ Four test cases are provided which covers a range of posibilities. Run the follo
 - **Models:** resp, resp-ind and resp-perm.
 - **Test:** Two stage fitting on a two conformations. Inter-molecular fractional charge constraint applied.
 - **Note:** Two *2-Methyl-3-naphthylpropionic acid* molecules fitted together to obtain charges for the "super molecule" *bis-(naphthyl-1-methyl) acetic acid*.
-
-## Resources
-The `pyresp_gen.py` program for automatically generating input files for `py_resp.py` is available [here](https://github.com/csu1505110121/pyresp_gen).
 
 ## Citation
 To cite PyRESP, see the following publication:
