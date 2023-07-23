@@ -1,0 +1,10 @@
+%OldChk=PLP_ideal_opt.chk
+%Chk=PLP_ideal_opt_esp.chk
+%Mem=64GB
+%NProc=64
+#MP2/aug-cc-pVTZ Geom=Check SCF=Tight Pop=MK IOp(6/33=2,6/42=6,6/43=20) Guess=Read Density=Current
+
+ PLP esp
+
+-2 1
+

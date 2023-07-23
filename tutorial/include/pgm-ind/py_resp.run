@@ -1,0 +1,28 @@
+#!/bin/csh -f
+pyresp_gen.py -i PLP_ideal_opt_esp.dat -f1 1st.in -f2 2nd.in -p ind -q -2
+
+echo RESP stage 1:
+py_resp.py -O \
+		-i 1st.in \
+		-o 1st.out \
+		-e PLP_ideal_opt_esp.dat \
+		-ip $AMBERHOME/AmberTools/examples/PyRESP/polarizability/pGM-pol-2016-09-01 \
+		-s 1st.esp \
+		-t 1st.chg			|| goto error
+
+echo RESP stage 2:
+py_resp.py -O \
+		-i 2nd.in \
+		-o 2nd.out \
+		-e PLP_ideal_opt_esp.dat \
+		-ip $AMBERHOME/AmberTools/examples/PyRESP/polarizability/pGM-pol-2016-09-01 \
+		-s 2nd.esp \
+		-t 2nd.chg \
+		-q 1st.chg			|| goto error
+
+echo No errors detected
+exit(0)
+
+error:
+echo Error: check .out and try again
+exit(1)

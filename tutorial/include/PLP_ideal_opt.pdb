@@ -1,0 +1,51 @@
+HEADER
+REMARK PLP opt
+HETATM    1  N           1       2.124  -0.052   1.996                       N
+HETATM    2  C           1       1.348  -0.064   3.090                       C
+HETATM    3  C           1       2.016  -0.086   4.441                       C
+HETATM    4  C           1      -0.045  -0.057   2.988                       C
+HETATM    5  O           1      -0.788  -0.070   4.129                       O
+HETATM    6  C           1      -0.660  -0.036   1.708                       C
+HETATM    7  C           1      -2.103  -0.029   1.609                       C
+HETATM    8  O           1      -2.872  -0.040   2.597                       O
+HETATM    9  C           1       0.177  -0.023   0.557                       C
+HETATM   10  C           1       1.555  -0.032   0.780                       C
+HETATM   11  C           1      -0.369  -0.001  -0.851                       C
+HETATM   12  O           1       0.650   0.009  -1.793                       O
+HETATM   13  P           1       0.043   0.032  -3.468                       P
+HETATM   14  O           1      -0.784   1.328  -3.494                       O
+HETATM   15  O           1       1.338   0.038  -4.274                       O
+HETATM   16  O           1      -0.792  -1.259  -3.527                       O
+HETATM   17  H           1       1.735   0.785   5.045                       H
+HETATM   18  H           1       1.729  -0.972   5.019                       H
+HETATM   19  H           1       3.098  -0.088   4.297                       H
+HETATM   20  H           1      -1.733  -0.062   3.831                       H
+HETATM   21  H           1      -2.534  -0.013   0.600                       H
+HETATM   22  H           1       2.207  -0.022  -0.085                       H
+HETATM   23  H           1      -1.026  -0.879  -1.004                       H
+HETATM   24  H           1      -1.020   0.884  -0.979                       H
+CONECT    1    2   10
+CONECT    2    1    3    4
+CONECT    3    2   17   18   19
+CONECT    4    2    5    6
+CONECT    5    4   20
+CONECT    6    4    7    9
+CONECT    7    6    8   21
+CONECT    8    7
+CONECT    9    6   10   11
+CONECT   10    1    9   22
+CONECT   11    9   12   23   24
+CONECT   12   11   13
+CONECT   13   12   14   15   16
+CONECT   14   13
+CONECT   15   13
+CONECT   16   13
+CONECT   17    3
+CONECT   18    3
+CONECT   19    3
+CONECT   20    5
+CONECT   21    7
+CONECT   22   10
+CONECT   23   11
+CONECT   24   11
+END
