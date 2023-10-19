@@ -23,7 +23,11 @@ The following command should install all required libraries:
 `$ pip install numpy scipy f90nml`
 
 ## Tutorial and Documentation
-The tutorial of using `py_resp.py` for electrostatic parameterizations for pyridoxal phosphate (PLP) can be found [here](http://htmlpreview.github.io/?https://github.com/ShijiZ/PyRESP/blob/master/tutorial/pyresp.html). Note that following this tutorial requires the installation of [AmberTools](https://ambermd.org/AmberTools.php), which also contains:
+The tutorial of using `py_resp.py` for electrostatic parameterizations for pyridoxal phosphate (PLP) can be found on:
+- [Tutorial on Github](http://htmlpreview.github.io/?https://github.com/ShijiZ/PyRESP/blob/master/tutorial/pyresp.html).
+- [Tutorial on Amber](http://ambermd.org/tutorials/basic/tutorial19/index.php)
+
+Note that following this tutorial requires the installation of [AmberTools](https://ambermd.org/AmberTools.php), which also contains:
 - The `pyresp_gen.py` program for automatically generating input files for `py_resp.py` (Ther standalone version of `pyresp_gen.py` is available [here](https://github.com/csu1505110121/pyresp_gen));
 - The `espgen` program for converting Gaussian output files to esp input files for `py_resp.py`.
 
