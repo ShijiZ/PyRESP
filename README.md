@@ -24,7 +24,7 @@ The following command should install all required libraries:
 
 ## Tutorial and Documentation
 The tutorial of using `py_resp.py` for electrostatic parameterizations for pyridoxal phosphate (PLP) can be found on:
-- [Tutorial on Github](http://htmlpreview.github.io/?https://github.com/ShijiZ/PyRESP/blob/master/tutorial/pyresp.html).
+- [Tutorial on Github](http://htmlpreview.github.io/?https://github.com/ShijiZ/PyRESP/blob/master/tutorial/pyresp.html)
 - [Tutorial on Amber](http://ambermd.org/tutorials/basic/tutorial19/index.php)
 
 Note that following this tutorial requires the installation of [AmberTools](https://ambermd.org/AmberTools.php), which also contains:
