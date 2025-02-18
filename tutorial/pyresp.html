@@ -3,6 +3,7 @@
 
 <head>
     <title>Electrostatic Parameterization with py_resp.py</title>
+    <link rel="stylesheet" href="pyresp-styles.css">
 </head>
 
 <body>
@@ -30,9 +31,8 @@
     <p>As the RESP procedure, the parameterization using the PyRESP procedure consists of 3 steps. First, we need to optimize the geometry of the molecule to be parameterized, then we need to generate electrostatic potential surrounding the molecule, and then finally we need to run the PyRESP parameterization. In this tutorial, we will show the electrostatic parameterization of PLP with three models: RESP, pGM-ind, and pGM-perm. All QM calculations will be performed using Gaussian.</p>
 
     <h2>Process</h2>
-<ol>
-    <li>
-        <h3>QM Geometry Optimization</h3>
+
+        <h3>3.1 QM Geometry Optimization</h3>
         <p>First, we obtain the idealized structure of PLP in SDF format from <a href="https://files.rcsb.org/ligands/download/PLP_ideal.sdf">https://files.rcsb.org/ligands/download/PLP_ideal.sdf</a>. You can also download the idealized structure of PLP <a href="include/PLP_ideal.sdf">here</a>.</p>
         <p>Fig. 1 is the idealized structure of PLP viewed using visualizer software Avogadro. Note that in physiological condition, the phosphate group should be deprotonated. Therefore, we remove the two hydrogen atoms attached to the phosphates group (selected atoms displayed in cyan spheres in Fig. 1).</p>
         <figure>
@@ -43,9 +43,8 @@
         <p>We can generate the optimized coordinates in pdb format for comparison. Here we use Newzmat which ships with Gaussian to convert the checkpoint file to a pdb file.</p>
         <pre>newzmat -ichk -opdb PLP_ideal_opt.chk PLP_ideal_opt.pdb</pre>
         <p>The pdb file for optimized coordinates is provided here: <a href="include/PLP_ideal_opt.pdb">PLP_ideal_opt.pdb</a>.</p>
-    </li>
-    <li>
-        <h3>Electrostatic Potential Calculation</h3>
+
+        <h3>3.2 Electrostatic Potential Calculation</h3>
         <p>The next step is to calculate the ESP surrounding the optimized PLP molecule that can ultimately be read by the py_resp.py program. Consistent with the original <a href="include/2022PyRESP.pdf">PyRESP paper</a>, we use MP2/aug-cc-pVTZ level of theory. The Gaussian route line for this project needs to read:</p>
         <pre>#MP2/aug-cc-pVTZ Geom=Check SCF=Tight Pop=MK IOp(6/33=2,6/42=6,6/43=20) Guess=Read Density=Current</pre>
         <ul>
@@ -55,17 +54,15 @@
             <li><strong>IOp 6/43=20</strong> - Specifies increment between layers, which is 0.01*20=0.2 times the van der Waals radii.</li>
         </ul>
         <p>Here are the Gaussian input and output files: <a href="include/PLP_ideal_opt_esp.gin">PLP_ideal_opt_esp.gin</a>, <a href="include/PLP_ideal_opt_esp.gout">PLP_ideal_opt_esp.gout</a>.</p>
-    </li>
-    <li>
-        <h3>Convert the Gaussian ESP data format for PyRESP</h3>
+
+        <h3>3.3 Convert the Gaussian ESP data format for PyRESP</h3>
         <p>py_resp.py only reads in ESP data in a specific file format. To convert from the Gaussian output format to the RESP input format, we use the espgen program ships with AmberTools:</p>
         <pre>espgen -i PLP_ideal_opt_esp.gout -o PLP_ideal_opt_esp.dat -p 1</pre>
         <p>The <strong>-p</strong> option will generate extra information such as atom types, which is necessary for the parameterization of the pGM-ind and pGM-perm models. Here is the generated dat file: <a href="include/PLP_ideal_opt_esp.dat">PLP_ideal_opt_esp.dat</a>.</p>
         <p>Note if you aim to perform multiple conformation parameterizations, you can use the <strong>cat</strong> command to concatenate all generated dat files into a single file, as did in tutorial <a href="https://ambermd.org/tutorials/advanced/tutorial1/section1.php">https://ambermd.org/tutorials/advanced/tutorial1/section1.php</a>.</p>
         <p>After obtaining the esp dat files, we will parameterize PLP for the following 3 electrostatic models: RESP, pGM-ind, and pGM-perm, which will be introduced individually. The preparation of the input files for py_resp.py can be tedious and error-prone. In particular, a “two-stage” parameterization strategy is recommended, as introduced in both the original <a href="include/1993RESP.pdf">RESP paper</a> and <a href="include/2022PyRESP.pdf">PyRESP paper</a>. For this reason, we have developed the pyresp_gen.py program for automatically generating input files for the py_resp.py program. (Manuscript in preparation) pyresp_gen.py has been included in AmberTools23. As the user, it is still recommended to read the papers understand the two-stage parameterization strategy to make sure everything is correct during the parameterization processes. More details about pyresp_gen.py and py_resp.py can be found in page 358 of <a href="https://ambermd.org/doc12/Amber23.pdf#page=358">Amber 2023 manual</a>.</p>
-    </li>
-    <li>
-        <h3>RESP Parameterization</h3>
+
+        <h3>3.4 RESP Parameterization</h3>
         <p>For RESP parameterization, create a new folder named <strong>resp</strong>, and copy the generated <a href="include/PLP_ideal_opt_esp.dat">PLP_ideal_opt_esp.dat</a> file from step 3 into the folder. Then, we run the following script <a href="include/resp/py_resp.run">py_resp.run</a> for executing pyresp_gen.py and py_resp.py:</p>
 
 <pre>#!/bin/csh -f
@@ -113,9 +110,8 @@ exit(1)</pre>
         </ul>
         <p>Here we provide the script: <a href="include/resp/py_resp.run">py_resp.run</a></p>
         <p>Here are all the generated files by running the script: <a href="include/resp/1st.in">1st.in</a>, <a href="include/resp/1st.out">1st.out</a>, <a href="include/resp/1st.chg">1st.chg</a>, <a href="include/resp/1st.esp">1st.esp</a>, <a href="include/resp/2nd.in">2nd.in</a>, <a href="include/resp/2nd.out">2nd.out</a>, <a href="include/resp/2nd.chg">2nd.chg</a>, <a href="include/resp/2nd.esp">2nd.esp</a></p>
-    </li>
-    <li>    
-        <h3>pGM-ind Parameterization</h3>
+   
+        <h3>3.5 pGM-ind Parameterization</h3>
         <p>For pGM-ind parameterization, create a new folder named <strong>pgm-ind</strong>, and copy the generated <a href="include/PLP_ideal_opt_esp.dat">PLP_ideal_opt_esp.dat</a> file from step 3 into the folder. Then, we run the following script <a href="include/pgm-ind/py_resp.run">py_resp.run</a> for executing pyresp_gen.py and py_resp.py:</p>
 
 <pre>#!/bin/csh -f
@@ -158,9 +154,8 @@ exit(1)</pre>
         
         <p>Here we provide the script: <a href="include/pgm-ind/py_resp.run">py_resp.run</a></p>
         <p>Here are all the generated files by running the script: <a href="include/pgm-ind/1st.in">1st.in</a>, <a href="include/pgm-ind/1st.out">1st.out</a>, <a href="include/pgm-ind/1st.chg">1st.chg</a>, <a href="include/pgm-ind/1st.esp">1st.esp</a>, <a href="include/pgm-ind/2nd.in">2nd.in</a>, <a href="include/pgm-ind/2nd.out">2nd.out</a>, <a href="include/pgm-ind/2nd.chg">2nd.chg</a>, <a href="include/pgm-ind/2nd.esp">2nd.esp</a></p>
-    </li>
-    <li>
-        <h3>pGM-perm Parameterization</h3>
+
+        <h3>3.6 pGM-perm Parameterization</h3>
         <p>For pGM-perm parameterization, create a new folder named <strong>pgm-perm</strong>, and copy the generated <a href="include/PLP_ideal_opt_esp.dat">PLP_ideal_opt_esp.dat</a> file from step 3 into the folder. Then, we run the following script <a href="include/pgm-perm/py_resp.run">py_resp.run</a> for executing pyresp_gen.py and py_resp.py:</p>
 
 <pre>#!/bin/csh -f
@@ -198,9 +193,8 @@ exit(1)</pre>
         </ul>
         <p>Here we provide the script: <a href="include/pgm-perm/py_resp.run">py_resp.run</a></p>
         <p>Here are all the generated files by running the script: <a href="include/pgm-perm/1st.in">1st.in</a>, <a href="include/pgm-perm/1st.out">1st.out</a>, <a href="include/pgm-perm/1st.chg">1st.chg</a>, <a href="include/pgm-perm/1st.esp">1st.esp</a>, <a href="include/pgm-perm/2nd.in">2nd.in</a>, <a href="include/pgm-perm/2nd.out">2nd.out</a>, <a href="include/pgm-perm/2nd.chg">2nd.chg</a>, <a href="include/pgm-perm/2nd.esp">2nd.esp</a></p>
-    </li>
-    <li>
-        <h3>Analysis</h3>
+
+        <h3>3.7 Analysis</h3>
         <p>Among the generated files for each model, pay close attention to those generated from the 2nd stage, i.e., output parameter files named 2nd.chg, output files named 2nd.out, and output ESP files named 2nd.esp.</p>
         <p>First, let’s focus on output parameter file 2nd.chg of each model:</p>
         <ul>
@@ -292,8 +286,7 @@ exit(1)</pre>
             <figcaption>Fig.4. Scatterplots of QM ESPs and ESPs calculated by each model.</figcaption>
         </figure>
         <p>Copyright Shiji Zhao, 2023</p>
-    </li>
-</ol>
+
 </body>
 
 </html>
